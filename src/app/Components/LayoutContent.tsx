@@ -67,7 +67,7 @@ export default function LayoutContent({
 
       <main
         className={`
-          pt-32 md:pt-20 transition-all duration-300
+          pt-20 transition-all duration-300
           ml-0 ${isSidebarOpen ? "md:ml-64" : "md:ml-14"}
         `}
       >
