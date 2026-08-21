@@ -13,7 +13,7 @@ import {
 
 const pedidos = [
   { tipo: "Férias", periodo: "04 Ago — 15 Ago 2026", estado: "Aprovado" },
-  { tipo: "Dispensa", periodo: "22 Jul 2026", estado: "Aprovado" },
+  { tipo: "Falta", periodo: "22 Jul 2026", estado: "Aprovado" },
   { tipo: "Ausência", periodo: "10 Jul 2026", estado: "Rejeitado" },
 ];
 
@@ -126,11 +126,11 @@ function Calendario({
 
 export default function FeriasPage() {
   const [modalAberto, setModalAberto] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState<"ferias" | "dispensas">("ferias");
+  const [abaAtiva, setAbaAtiva] = useState<"ferias" | "faltas">("ferias");
   const [campoFerias, setCampoFerias] = useState<"inicio" | "fim">("inicio");
   const [inicioFerias, setInicioFerias] = useState("");
   const [fimFerias, setFimFerias] = useState("");
-  const [dataDispensa, setDataDispensa] = useState("");
+  const [dataFalta, setDataFalta] = useState("");
   const [motivo, setMotivo] = useState("");
   const [mensagem, setMensagem] = useState("");
 
@@ -153,13 +153,13 @@ export default function FeriasPage() {
     setMensagem("Pedido de férias registado com sucesso.");
   }
 
-  function enviarDispensa() {
-    if (!dataDispensa || !motivo.trim()) {
+  function enviarFalta() {
+    if (!dataFalta || !motivo.trim()) {
       setMensagem("Selecione a data e explique o motivo da ausência.");
       return;
     }
 
-    setMensagem("Pedido de dispensa enviado com sucesso.");
+    setMensagem("Pedido de falta enviado com sucesso.");
   }
 
   const dataDoCalendario = campoFerias === "inicio" ? inicioFerias : fimFerias;
@@ -232,7 +232,7 @@ export default function FeriasPage() {
 
             <div className="mt-5 grid grid-cols-2 rounded-lg bg-gray-100 p-1">
               <button type="button" onClick={() => { setAbaAtiva("ferias"); setMensagem(""); }} className={`rounded-md px-3 py-2 text-sm font-medium ${abaAtiva === "ferias" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>Férias</button>
-              <button type="button" onClick={() => { setAbaAtiva("dispensas"); setMensagem(""); }} className={`rounded-md px-3 py-2 text-sm font-medium ${abaAtiva === "dispensas" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>Dispensas</button>
+              <button type="button" onClick={() => { setAbaAtiva("faltas"); setMensagem(""); }} className={`rounded-md px-3 py-2 text-sm font-medium ${abaAtiva === "faltas" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>Faltas</button>
             </div>
 
             {abaAtiva === "ferias" ? (
@@ -252,10 +252,10 @@ export default function FeriasPage() {
             ) : (
               <div className="mt-5">
                 <p className="mb-3 text-sm font-medium text-gray-700">Selecione o dia da ausência</p>
-                <Calendario valorSelecionado={dataDispensa} aoSelecionar={setDataDispensa} />
-                <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor="motivo-ausencia">Motivo da ausência</label>
-                <textarea id="motivo-ausencia" value={motivo} onChange={(event) => setMotivo(event.target.value)} placeholder="Explique o motivo do pedido de dispensa..." className="mt-2 min-h-28 w-full resize-y rounded-lg border border-gray-200 p-3 text-sm outline-none focus:border-yellow-700 focus:ring-1 focus:ring-yellow-700" />
-                <button type="button" onClick={enviarDispensa} className="mt-5 w-full rounded-lg bg-yellow-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-yellow-600">Enviar pedido</button>
+                <Calendario valorSelecionado={dataFalta} aoSelecionar={setDataFalta} />
+                <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor="motivo-falta">Motivo da falta</label>
+                <textarea id="motivo-falta" value={motivo} onChange={(event) => setMotivo(event.target.value)} placeholder="Explique o motivo da falta..." className="mt-2 min-h-28 w-full resize-y rounded-lg border border-gray-200 p-3 text-sm outline-none focus:border-yellow-700 focus:ring-1 focus:ring-yellow-700" />
+                <button type="button" onClick={enviarFalta} className="mt-5 w-full rounded-lg bg-yellow-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-yellow-600">Enviar pedido</button>
               </div>
             )}
 
