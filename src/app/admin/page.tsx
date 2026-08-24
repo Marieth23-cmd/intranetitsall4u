@@ -81,21 +81,43 @@ const eventos = [
   },
 ];
 
+
+const estatisticas=[
+    {
+        numero:"8",
+        titulo:"colaboradores"
+    },
+     {
+        numero:"8",
+        titulo:"documentos"
+    },
+     {
+        numero:"8",
+        titulo:"clientes"
+    },
+
+    {
+        numero:"8",
+        titulo:"Projectos Criados"
+    }
+]
+
+
+
 export default function Home() {
 
-const horaAtual= new Date().getHours()
-
+const horaAtual = new Date().getHours()
 let saudacao:string;
 
-if(horaAtual <=5 && horaAtual<12){
-   saudacao="Bom dia"
-}else if(horaAtual >=12 && horaAtual<=18 ){
-  saudacao="Boa tarde"
-
-}else{
-  saudacao="Boa noite "
-
-}
+if(horaAtual>=5 && horaAtual< 12){
+    saudacao= "Bom dia"
+    }else if( horaAtual>= 12 && horaAtual<=18){
+            saudacao="Boa tarde"
+     }else{
+           saudacao="Boa noite"     
+     }
+            
+        
 
 
 
@@ -131,7 +153,7 @@ useEffect(() => {
       {/* Cabeçalho */}
       <header>
         <h1 className="text-2xl font-semibold text-black sm:text-3xl">
-          {saudacao}, Marieth
+          {saudacao}, Admin
         </h1>
 
         <p className="mt-2 text-sm text-gray-500 sm:text-base">
@@ -180,13 +202,33 @@ useEffect(() => {
 
             <div className="absolute inset-0 bg-black/10" />
 
-</div>
+            </div>
 
         </div>
       </section>
 
+         {/* estatisticas */}
 
-      {/* COMUNICADOS + ANIVERSARIANTES */}
+         <section  className="mt-6 ">
+
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2   ">
+                {estatisticas.map((estatistica , chave)=>(
+                     <div key={chave} className="bg-white border-2 px-3 py-5 shadow-sm rounded-lg text-center">
+                        <h1 className="text-lg md:text-xl text-black">{estatistica.numero}</h1>
+                        <p className="text-gray-700">{estatistica.titulo}</p>
+
+                </div>)) 
+                   
+                    }
+               
+            </div>
+
+
+         </section>
+
+
+        
+        {/* COMUNICADOS + ANIVERSARIANTES */}
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
 
 
@@ -199,7 +241,7 @@ useEffect(() => {
                 Comunicados recentes
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-700">
                 Últimas informações da empresa
               </p>
             </div>
@@ -228,15 +270,15 @@ useEffect(() => {
                 {/* Conteúdo */}
                 <div className="min-w-0">
 
-                  <h3 className="text-sm font-medium text-gray-800">
+                  <h3 className="text-sm font-medium text-gray-700">
                     {comunicado.titulo}
                   </h3>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-700">
                     {comunicado.data}
                   </p>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {comunicado.local}
                   </p>
 
@@ -307,11 +349,11 @@ useEffect(() => {
                   />
                 </div>
 
-                <p className="mt-3 text-sm font-medium text-gray-800">
+                <p className="mt-3 text-sm font-medium text-gray-700">
                   {pessoa.nome}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   {pessoa.data}
                 </p>
 
@@ -344,7 +386,7 @@ useEffect(() => {
                 Próximos eventos
               </h2>
 
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-700">
                 Eventos e atividades da empresa
               </p>
             </div>
@@ -363,11 +405,11 @@ useEffect(() => {
                 {/* Data */}
                 <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-gray-50 text-center">
 
-                  <span className="text-[10px] font-medium text-gray-400">
+                  <span className="text-[10px] font-medium text-gray-500">
                     {evento.mes}
                   </span>
 
-                  <span className="text-xl font-semibold text-gray-800">
+                  <span className="text-xl font-semibold text-gray-700">
                     {evento.dia}
                   </span>
 
@@ -377,15 +419,15 @@ useEffect(() => {
                 {/* Informação */}
                 <div>
 
-                  <h3 className="text-sm font-medium text-gray-800">
+                  <h3 className="text-sm font-medium text-gray-700">
                     {evento.titulo}
                   </h3>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {evento.data}
                   </p>
 
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {evento.local}
                   </p>
 

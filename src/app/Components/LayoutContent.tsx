@@ -12,9 +12,13 @@ export default function LayoutContent({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+
   const [acessoVerificado, setAcessoVerificado] = useState(false);
-  // No telemóvel começa fechada; em ecrãs md (768 px) ou maiores, abre por padrão.
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // SIMULAÇÃO TEMPORÁRIA
+  const [role] = useState<"admin" | "colaborador">("admin");
 
   useEffect(() => {
     if (window.matchMedia("(min-width: 768px)").matches) {
@@ -45,10 +49,10 @@ export default function LayoutContent({
 
   return (
     <div>
-
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
+        role={role}
       />
 
       <Navbar
@@ -73,7 +77,6 @@ export default function LayoutContent({
       >
         {children}
       </main>
-
     </div>
   );
 }
