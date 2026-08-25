@@ -1,14 +1,7 @@
 "use client";
 
 import {
-  FiDownload,
-  FiFileText,
-  FiSearch,
-  FiPlus,
-  FiEye,
-  FiEdit2,
-  FiTrash2,
-} from "react-icons/fi";
+  FiDownload, FiFileText, FiSearch, FiPlus, FiEye, FiEdit2, FiTrash2,} from "react-icons/fi";
 
 const documentos = [
   {
@@ -50,7 +43,7 @@ function AcessoDocumento({ acesso }: { acesso: string }) {
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
         acesso === "Restrito"
-          ? "bg-gray-100 text-gray-600"
+          ? "bg-gray-100 text-gray-700"
           : "bg-yellow-50 text-yellow-700"
       }`}
     >
@@ -71,9 +64,7 @@ export default function DocumentosAdminPage() {
             Gestão de documentos
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Adicione, organize e faça a gestão dos documentos da empresa.
-          </p>
+        
         </div>
 
         <button

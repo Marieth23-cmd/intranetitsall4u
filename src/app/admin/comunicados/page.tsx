@@ -32,9 +32,7 @@ export default function ComunicadosAdminPage() {
             Gestão de comunicados
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Crie, edite e acompanhe os comunicados internos da empresa.
-          </p>
+         
         </div>
 
         <button

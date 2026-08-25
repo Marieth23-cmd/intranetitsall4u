@@ -213,7 +213,7 @@ useEffect(() => {
 
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2   ">
                 {estatisticas.map((estatistica , chave)=>(
-                     <div key={chave} className="bg-white border-2 px-3 py-5 shadow-sm rounded-lg text-center">
+                     <div key={chave} className="bg-white border border-gray-200 px-3 py-5 shadow-sm rounded-lg text-center">
                         <h1 className="text-lg md:text-xl text-black">{estatistica.numero}</h1>
                         <p className="text-gray-700">{estatistica.titulo}</p>
 
@@ -301,7 +301,7 @@ useEffect(() => {
               <h2 className="text-lg font-semibold text-gray-900">
                 Aniversariantes              </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-700">
                 Próximos aniversários
               </p>
             </div>

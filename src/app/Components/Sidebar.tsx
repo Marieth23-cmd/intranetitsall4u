@@ -199,7 +199,7 @@ export default function Sidebar({
             >
               <FiCalendar size={20} />
 
-              {isOpen && <span>Férias e ausências</span>}
+              {isOpen && <span>Férias </span>}
             </Link>
 
             {isOpen && (
@@ -335,7 +335,7 @@ export default function Sidebar({
             >
               <FiCalendar size={20} />
 
-              {isOpen && <span>Férias e ausências</span>}
+              {isOpen && <span>Férias</span>}
             </Link>
           </>
         )}
