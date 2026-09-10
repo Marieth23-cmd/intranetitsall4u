@@ -1,16 +1,28 @@
-const clientes = [
-  { nome: "Aliança Seguros", area: "Seguros", projetos: "10", estado: "Ativo" },
-  { nome: "ZON", area: "Telecomunicações", projetos: "10", estado: "Ativo" },
-  { nome: "Bwizer", area: "Saúde", projetos: "10", estado: "Inativo" },
-];
+"use client";
+import { useState, useEffect } from "react";
+import {useRouter} from "next/navigation"
+import { createClient } from "../../../lib/supabase/client";
+
+
+
+
+type clientes = {
+  nome: string;
+  area: string;
+  projetos: number;
+  estado: string;
+};
+
 
 function EstadoCliente({ estado }: { estado: string }) {
-  const ativo = estado === "Ativo";
+  const ativo = estado === "ativo";
 
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-        ativo ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+        ativo
+          ? "bg-green-50 text-green-700"
+          : "bg-red-50 text-red-700"
       }`}
     >
       {estado}
@@ -18,7 +30,93 @@ function EstadoCliente({ estado }: { estado: string }) {
   );
 }
 
+
 export default function ClientesPage() {
+ const [clientes, setClientes] = useState<clientes[]>([]);
+ const [carregando, setCarregando] = useState(true);
+ const [autorizado , setAutorizado] =useState(false)
+ const [verificandoAcesso, setVerificandoAcesso] = useState(true)
+ const router = useRouter()
+
+
+ useEffect(() => {
+    async function fetchClientes() {
+      try {
+        const response = await fetch("/api/clientes", { cache: "no-store" });
+        const data = await response.json();
+
+        if (response.ok) {
+          setClientes(data.clientes || []);
+        } else {
+          console.error("Erro ao buscar clientes:", data.error);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar clientes:", error);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    fetchClientes();
+  }, []);
+
+  useEffect(() => {
+    async function verificarAcessoColaborador() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const role = user?.user_metadata?.role;
+
+        if (role === "colaborador") {
+          setAutorizado(true);
+        } else if (role === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.log("Erro ao verificar utilizador logado", error);
+        router.replace("/login");
+      } finally {
+        setVerificandoAcesso(false);
+      }
+    }
+
+    verificarAcessoColaborador();
+  }, [router]);
+
+
+
+
+  if (carregando) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-700">Carregando clientes...</p>
+      </div>
+    );
+  }
+
+
+  if (clientes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-700">Nenhum cliente encontrado.</p>
+      </div>
+    );
+  }
+
+  if(!autorizado){
+        return <div className="flex h-screen items-center justify-center text-blue-700">A redirecionar para o painel administrativo...</div>;
+
+  }
+
+  
+ if (verificandoAcesso) {
+    return <div className="flex h-screen items-center justify-center text-gray-500">A carregar portal...</div>;
+  }
+
+
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       <header>
@@ -32,11 +130,11 @@ export default function ClientesPage() {
           id="pesquisa-clientes"
           type="search"
           placeholder="Pesquisar clientes"
-          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-yellow-700 focus:ring-1 focus:ring-yellow-700 sm:max-w-md"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-700 focus:ring-1 focus:ring-blue-700 sm:max-w-md"
         />
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-md bg-yellow-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-700 focus:ring-offset-2 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-md bg-blue-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 sm:w-auto"
         >
           Pesquisar
         </button>

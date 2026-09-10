@@ -1,8 +1,9 @@
 "use client";
-
+import { createClient } from "../../../lib/supabase/client";
 import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FiEyeOff ,FiEye } from "react-icons/fi";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,21 +12,60 @@ export default function LoginPage() {
   const [manterSessao, setManterSessao] = useState(false);
   const [erros, setErros] = useState<{ email?: string; senha?: string }>({});
   const [aviso, setAviso] = useState("");
+  const [carregando ,setCarregando ] = useState(false)
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  function entrar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+ async function entrar(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    const novosErros: { email?: string; senha?: string } = {};
-    if (!/^\S+@\S+\.\S+$/.test(email)) novosErros.email = "Introduza um email válido.";
-    if (senha.length < 6) novosErros.senha = "A senha deve ter pelo menos 6 caracteres.";
+  // 1. Validação visual básica (Mantemos a sua lógica excelente)
+  const novosErros: { email?: string; senha?: string } = {};
+  if (!/^\S+@\S+\.\S+$/.test(email)) novosErros.email = "Introduza um email válido.";
+  if (senha.length < 6) novosErros.senha = "A senha deve ter pelo menos 6 caracteres.";
 
-    setErros(novosErros);
-    if (Object.keys(novosErros).length > 0) return;
+  setErros(novosErros);
+  if (Object.keys(novosErros).length > 0) return;
 
-    const armazenamento = manterSessao ? localStorage : sessionStorage;
-    armazenamento.setItem("intranet-teste-autorizado", "true");
-    router.replace("/");
+  try {
+    setCarregando(true);
+    setAviso(""); 
+    
+    
+    const supabase = createClient();
+
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: senha,
+    });
+
+   
+    if (error) {
+   
+      setAviso(`Erro ao entrar: ${error.message}`);
+      return;
+    }
+
+    const { data: perfil } = await supabase
+      .from("usuarios")
+      .select("role")
+      .eq("id_usuario", (await supabase.auth.getUser()).data.user?.id)
+      .single();
+
+    router.replace(perfil?.role === "admin" ? "/admin" : "/");
+    router.refresh();
+
+
+
+  } catch (erro) {
+    console.error("Erro inesperado no login:", erro);
+    setAviso("Ocorreu um erro inesperado. Tente novamente.");
+  } finally {
+    setCarregando(false);
   }
+}
+
+  
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080808] px-4 py-10">
@@ -64,19 +104,28 @@ export default function LoginPage() {
             {erros.email && <p className="mt-2 text-xs text-red-600">{erros.email}</p>}
           </div>
 
-          <div>
-            <label htmlFor="senha" className="sr-only">Senha</label>
-            <input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(event) => setSenha(event.target.value)}
-              placeholder="Senha"
-              autoComplete="current-password"
-              className={`w-full border-b bg-transparent px-0 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-black ${erros.senha ? "border-red-500" : "border-gray-300"}`}
-            />
+         
+            <div className="relative">
+              <input
+                id="senha"
+                type={mostrarSenha ? "text" : "password"}
+                value={senha}
+                onChange={(event) => setSenha(event.target.value)}
+                placeholder="Senha"
+                autoComplete="current-password"
+                className={`w-full border-b bg-transparent px-0 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-black ${erros.senha ? "border-red-500" : "border-gray-300"}`}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha(!mostrarSenha)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {mostrarSenha ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
+            
             {erros.senha && <p className="mt-2 text-xs text-red-600">{erros.senha}</p>}
-          </div>
+          
 
           <div className="flex items-center justify-between gap-3 text-xs">
             <label className="flex cursor-pointer items-center gap-2 text-gray-600">
@@ -93,11 +142,35 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {aviso && <p role="status" className="rounded-lg bg-gray-100 p-3 text-center text-xs text-gray-600">{aviso}</p>}
-
-          <button type="submit" className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2">
-            Entrar
+          {aviso && <p role="status" className="rounded-lg bg-gray-100 p-3 text-center text-xs text-red-600">{aviso}</p>}
+      
+        <div className="flex flex-col gap-2">
+          <button 
+          disabled={carregando}
+          type="submit"
+          className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50">
+            {carregando? "A autenticar ...":"Entrar"}
           </button>
+
+
+        <div className="mt-6 border-t border-gray-100 pt-5 text-center">
+            <p className="text-xs text-gray-500">
+               Deseja entrar no Trello?
+            </p>
+
+      <a
+        href="URL_DO_ITS_TRELLO"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-800 hover:underline"
+      >
+        Aceder ao ItsTrello
+        <span className="ml-1">→</span>
+      </a>
+      </div>
+
+     
+          </div>
         </form>
       </section>
     </main>

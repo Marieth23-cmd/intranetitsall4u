@@ -1,21 +1,92 @@
-const comunicados = [
-  {
-    titulo: "Novo sistema de gestão de projetos",
-    descricao:
-      "Estamos a implementar um novo sistema de gestão de projetos para melhorar a colaboração e a eficiência da equipa.",
-    data: "10 de junho de 2024",
-    local: "Sala de reuniões 1",
-  },
-  {
-    titulo: "Reunião geral da equipa",
-    descricao:
-      "Será realizada uma reunião geral para apresentar as próximas atividades e alinhar os objetivos da equipa.",
-    data: "12 de junho de 2024",
-    local: "Sala de reuniões 1",
-  },
-];
+"use client";
+import { useState, useEffect } from "react";
+import {useRouter} from "next/navigation"
+import { createClient } from "../../../lib/supabase/client";
+
+
+
+
+type Comunicado = {
+   id_comunicados: number;
+  titulo: string;
+  descricao: string;
+  local: string;
+  data_publicacao: string;
+  publicado: boolean;
+  usuarios: {
+    email: string; 
+  } | null;
+};
 
 export default function ComunicadosPage() {
+const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+const [loading, setLoading] = useState(true);
+const [autorizado , setAutorizado] =useState(false)
+ const [verificandoAcesso, setVerificandoAcesso] = useState(true)
+ const router = useRouter()
+
+
+ const fetchComunicados = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/comunicados", {
+        cache: "no-store", // Evita cache para garantir dados atualizados
+      });
+      const data = await response.json();
+      setComunicados(data.comunicados || []);
+    } catch (error) {
+      console.error("Erro ao buscar comunicados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComunicados();
+  }, []);
+
+
+  
+useEffect(()=>{
+ async function verificarAcessoColaborador() {
+try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const role = user?.user_metadata?.role;
+
+        if (role === "colaborador") {
+          setAutorizado(true);
+          
+        } else if (role === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.log("Erro ao verificar utilizador logado", error);
+        router.replace("/login");
+      } finally {
+        setVerificandoAcesso(false);
+      }
+    }
+
+    verificarAcessoColaborador();
+
+
+
+ }, [router])
+
+ if (verificandoAcesso || loading) {
+    return <div className="flex h-screen items-center justify-center text-gray-500">A carregar portal...</div>;
+  }
+
+  if (!autorizado) {
+    return <div className="flex h-screen items-center justify-center text-blue-700">A redirecionar para o painel administrativo...</div>;
+  }
+
+
+
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       
@@ -28,24 +99,49 @@ export default function ComunicadosPage() {
       </p>
 
       <div className="mt-6 space-y-4">
-        {comunicados.map((comunicado, index) => (
-          <article
-            key={index}
-            className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-          >
-            <h2 className="text-lg font-semibold text-gray-800">
-              {comunicado.titulo}
-            </h2>
+       
+  {comunicados.map((comunicado, index) => { 
+    const dataPublicacao = new Date(comunicado.data_publicacao);
+    const dataFormatada = dataPublicacao.toLocaleDateString("pt-PT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+    return (
+      <article
+        key={comunicado.id_comunicados || index} 
+        className="
+          rounded-lg border border-gray-200
+          bg-white p-5 shadow-sm
+        "
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {comunicado.titulo}
+              </h2>
+
+              <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                {comunicado.usuarios?.email || "Sistema"}
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
               {comunicado.descricao}
             </p>
 
             <p className="mt-4 text-xs text-gray-400">
-              {comunicado.data} · {comunicado.local}
+              {dataFormatada} · {comunicado.local || "Geral"}
             </p>
-          </article>
-        ))}
+          </div>
+
+       </div>
+      </article>
+    )})}
+
       </div>
 
     </main>

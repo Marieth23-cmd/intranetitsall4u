@@ -1,4 +1,5 @@
 "use client";
+import { createClient } from "../../../lib/supabase/client";
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,8 +18,7 @@ export default function LayoutContent({
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // SIMULAÇÃO TEMPORÁRIA
-  const [role] = useState<"admin" | "colaborador">("admin");
+const [role, setRole] = useState<"admin" | "colaborador" | null>(null);
 
   useEffect(() => {
     if (window.matchMedia("(min-width: 768px)").matches) {
@@ -26,33 +26,63 @@ export default function LayoutContent({
     }
   }, []);
 
-  useEffect(() => {
-    if (pathname === "/login") return;
+useEffect(() => {
+  
+  if (pathname === "/login") return;
 
-    const autorizado =
-      localStorage.getItem("intranet-teste-autorizado") === "true" ||
-      sessionStorage.getItem("intranet-teste-autorizado") === "true";
+  async function verificarAcessoReal() {
+    try {
+      const supabase = createClient();
 
-    if (!autorizado) {
+      
+      const { data: { session } } = await supabase.auth.getSession();
+
+     
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+
+     
+      const { data: perfil, error } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id_usuario", session.user.id)
+        .single();
+
+      if (error || !perfil) {
+        console.error("Erro ao carregar perfil do usuário:", error);
+        router.replace("/login");
+        return;
+      }
+
+      setRole(perfil.role);
+      setAcessoVerificado(true);
+
+    } catch (erro) {
+      console.error("Erro inesperado na verificação de acesso:", erro);
       router.replace("/login");
-      return;
     }
+  }
 
-    setAcessoVerificado(true);
-  }, [pathname, router]);
+  verificarAcessoReal();
+}, [pathname, router]);
 
-  if (pathname === "/login") {
+
+ if (pathname === "/login") {
     return <>{children}</>;
   }
 
-  if (!acessoVerificado) return null;
+  if (!acessoVerificado) {
+    return null;
+  }
 
   return (
     <div>
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
-        role={role}
+        role={role? role : "colaborador"}
       />
 
       <Navbar

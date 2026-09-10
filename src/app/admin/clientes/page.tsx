@@ -1,33 +1,22 @@
 "use client";
+import {useState, useEffect} from "react";
+import { FiPlus,FiEdit2,} from "react-icons/fi";
 
-import {
-  FiPlus,
-  FiEdit2,
-} from "react-icons/fi";
+type clientes = {
+  id_cliente: number;
+  nome: string;
+  area: string;
+  projetos: number;
+  estado: "ativo" | "inativo";
+  data_criacao: string;
+  usuarios: {
+    email: string; 
+  } | null; 
 
-const clientes = [
-  {
-    nome: "Aliança Seguros",
-    area: "Seguros",
-    projetos: "10",
-    estado: "Ativo",
-  },
-  {
-    nome: "ZON",
-    area: "Telecomunicações",
-    projetos: "10",
-    estado: "Ativo",
-  },
-  {
-    nome: "Bwizer",
-    area: "Saúde",
-    projetos: "10",
-    estado: "Inativo",
-  },
-];
+}
 
 function EstadoCliente({ estado }: { estado: string }) {
-  const ativo = estado === "Ativo";
+  const ativo = estado === "ativo";
 
   return (
     <span
@@ -43,6 +32,87 @@ function EstadoCliente({ estado }: { estado: string }) {
 }
 
 export default function ClientesAdminPage() {
+ const [clientes, setClientes] = useState<clientes[]>([]);
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState<string | null>(null);
+ const [modalAberto, setModalAberto] = useState(false);
+ const [novoCliente, setNovoCliente] = useState({
+  nome: "",
+  area: "",
+  projetos: 0,
+  estado: "ativo" as "ativo" | "inativo",
+ });
+
+ const fetchClientes = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch("/api/clientes", {
+      cache: "no-store", 
+    });
+    const data = await response.json();
+    setClientes(data.clientes);
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao buscar clientes.");
+    }else{
+      setClientes(data.clientes);
+    }
+
+
+  } catch (error) {
+    console.error("Erro ao buscar clientes:", error);
+    setError("Erro ao buscar clientes. Tente novamente mais tarde.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+useEffect(() => {
+  fetchClientes();
+}, []);
+
+
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  try {
+    const response = await fetch("/api/clientes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(novoCliente),
+    });
+    const data = await response.json();
+
+    if (response.ok) {
+      setClientes((prevClientes) => [...prevClientes, data.cliente]);
+      setModalAberto(false);
+      setNovoCliente({
+        nome: "",
+        area: "",
+        projetos: 0,
+        estado: "ativo",
+      });
+    } else {
+      throw new Error(data.error || "Erro ao criar cliente.");
+    }
+  } catch (error) {
+    console.error("Erro ao criar cliente:", error);
+    setError("Erro ao criar cliente. Tente novamente mais tarde.");
+  }
+}
+
+
+
+
+
+if(loading){
+  return (
+    <div className="flex items-center justify-center h-screen"> carregando...</div>
+  )
+}
+
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
 
@@ -58,14 +128,15 @@ export default function ClientesAdminPage() {
         </div>
 
         <button
+        onClick={()=>setModalAberto(true)}
           type="button"
           className="
             inline-flex items-center justify-center gap-2
-            rounded-md bg-yellow-700 px-4 py-2.5
+            rounded-md bg-blue-700 px-4 py-2.5
             text-sm font-medium text-white shadow-sm
-            transition hover:bg-yellow-600
+            transition hover:bg-blue-600
             focus:outline-none focus:ring-2
-            focus:ring-yellow-700 focus:ring-offset-2
+            focus:ring-blue-700 focus:ring-offset-2
           "
         >
           <FiPlus size={18} />
@@ -244,6 +315,85 @@ export default function ClientesAdminPage() {
 
       </div>
 
+      {modalAberto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <h2 className="text-xl font-semibold text-gray-800">Cadastrar Novo Cliente</h2>
+
+            <form 
+            className="mt-4 space-y-4"
+            onSubmit={handleSubmit}
+            >
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={novoCliente.nome}
+                  onChange={(e) => setNovoCliente({ ...novoCliente, nome: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  placeholder="Digite o nome do cliente"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Área</label>
+                <input
+                  type="text"
+                  required
+                  value={novoCliente.area}
+                  onChange={(e) => setNovoCliente({ ...novoCliente, area: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  placeholder="Digite a área do cliente"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Projetos</label>
+                <input
+                  type="number"
+                  required
+                  value={novoCliente.projetos}
+                  onChange={(e) => setNovoCliente({ ...novoCliente, projetos: parseInt(e.target.value) })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  placeholder="Digite o número de projetos"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Estado</label>
+                <select
+                  required
+                  value={novoCliente.estado}
+                  onChange={(e) => setNovoCliente({ ...novoCliente, estado: e.target.value as "ativo" | "inativo" })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                >
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+
+          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(false)}
+                  className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                >
+                  Adicionar Cliente
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
     </main>
-  );
-}
+  )}

@@ -60,10 +60,10 @@ export default function AcessosAdminPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <FiUsers
                 size={19}
-                className="text-yellow-700"
+                className="text-blue-700"
               />
             </div>
 
@@ -83,10 +83,10 @@ export default function AcessosAdminPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <FiLock
                 size={19}
-                className="text-yellow-700"
+                className="text-blue-700"
               />
             </div>
 
@@ -144,9 +144,9 @@ export default function AcessosAdminPage() {
                 <span
                   className="
                     shrink-0 rounded-full
-                    bg-yellow-50 px-2.5 py-1
+                    bg-blue-50 px-2.5 py-1
                     text-[11px] font-medium
-                    text-yellow-700
+                    text-blue-700
                   "
                 >
                   {perfil.tipo}
@@ -181,7 +181,7 @@ export default function AcessosAdminPage() {
                       key={permissao}
                       className="flex items-start gap-2 text-sm text-gray-600"
                     >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-700" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-700" />
 
                       <span>
                         {permissao}

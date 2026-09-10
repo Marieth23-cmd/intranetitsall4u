@@ -1,22 +1,15 @@
 "use client";
-
+import { createClient } from "../../../lib/supabase/client";
+import {  useState } from "react";
+import {useRouter} from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-
-import {
-  FiHome,
-  FiBriefcase,
-  FiFolder,
-  FiCalendar,
-  FiUsers,
-  FiLock,
-  FiSettings,
-} from "react-icons/fi";
-
+import {FiHome,FiBriefcase,FiCalendar,FiUsers,FiLock,FiSettings} from "react-icons/fi";
 import { FaBars } from "react-icons/fa";
 import { PiMegaphone } from "react-icons/pi";
 import { CiLogout } from "react-icons/ci";
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -35,14 +28,38 @@ export default function Sidebar({
 
   const isAdmin = role === "admin";
 
+  const router = useRouter();
+  const[saindo , setSaindo]= useState(false)
+
+
+
+
+
+  async function handleLogout() {
+    setSaindo(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.refresh();
+      router.replace("/login");
+    
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      setSaindo(false);
+    }
+  }
+
   return (
-    <aside
-      className={`
-        fixed top-0 left-0 z-50 h-screen w-64 -translate-x-full bg-white border-r
-        transition-all duration-300 ease-in-out
-        ${isOpen ? "translate-x-0 md:w-64" : "md:w-14 md:translate-x-0"}
-      `}
-    >
+   <aside
+        className={`
+          fixed top-0 left-0 z-50 h-screen w-64
+          -translate-x-full bg-white border-r
+          transition-all duration-300 ease-in-out
+          flex flex-col
+          ${isOpen ? "translate-x-0 md:w-64" : "md:w-14 md:translate-x-0"}
+        `}
+      >
       {/* Cabeçalho */}
       <div className="h-20 flex items-center border-b">
         {isOpen && (
@@ -74,11 +91,11 @@ export default function Sidebar({
       </div>
 
       {/* Navegação */}
-      <nav className="p-4 space-y-2">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2 pb-24">
 
         {isAdmin ? (
           <>
-            {/* ================= ADMIN ================= */}
+            {/* = ADMIN = */}
 
             {isOpen && (
               <p className="px-3 pt-1 pb-2 text-xs font-semibold text-gray-400 uppercase">
@@ -164,23 +181,7 @@ export default function Sidebar({
               {isOpen && <span>Clientes</span>}
             </Link>
 
-            {/* Documentos */}
-            <Link
-              href="/admin/documentos"
-              className={`
-                flex items-center gap-3 rounded-lg border-l-4 p-3
-                hover:bg-gray-100
-                ${
-                  isActive("/admin/documentos")
-                    ? "border-black bg-gray-100 font-medium"
-                    : "border-transparent"
-                }
-              `}
-            >
-              <FiFolder size={20} />
-
-              {isOpen && <span>Documentos</span>}
-            </Link>
+           
 
             
 
@@ -302,23 +303,7 @@ export default function Sidebar({
               {isOpen && <span>Clientes</span>}
             </Link>
 
-            {/* Documentos */}
-            <Link
-              href="/documentos"
-              className={`
-                flex items-center gap-3 p-3 rounded-lg border-l-4
-                hover:bg-gray-100
-                ${
-                  isActive("/documentos")
-                    ? "border-black bg-gray-100 font-medium"
-                    : "border-transparent"
-                }
-              `}
-            >
-              <FiFolder size={20} />
-
-              {isOpen && <span>Documentos</span>}
-            </Link>
+           
 
             {/* Férias */}
             <Link
@@ -341,18 +326,17 @@ export default function Sidebar({
         )}
       </nav>
 
-      {/* Sair */}
-      <div className="absolute bottom-0 w-full border-t">
-        <button
-          className="
-            w-full p-4 flex items-center justify-center gap-2 text-red-600
-            hover:bg-red-600/10 hover:text-red-500
-          "
-        >
-          {isOpen && <span>Sair</span>}
-
-          <CiLogout size={20} />
-        </button>
+     <div className="shrink-0 w-full border-t bg-white">
+      <button
+        onClick={handleLogout}
+        disabled={saindo}
+        className="
+          w-full p-4 flex items-center justify-center gap-2 text-red-600
+          hover:bg-red-600/10 hover:text-red-500
+        ">
+        {isOpen && <span>{saindo ? "A sair..." : "Sair"}</span>}
+        <CiLogout size={20} />
+      </button>
       </div>
     </aside>
   );

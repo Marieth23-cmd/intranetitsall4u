@@ -1,4 +1,8 @@
 "use client";
+import {useState , useEffect} from "react"
+import {useRouter} from "next/navigation"
+import { createClient } from "../../../lib/supabase/client";
+
 
 import {
   FiCalendar,
@@ -36,7 +40,7 @@ function EstadoFerias({ estado }: { estado: string }) {
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
         aprovado
           ? "bg-green-50 text-green-700"
-          : "bg-yellow-50 text-yellow-700"
+          : "bg-blue-50 text-blue-700"
       }`}
     >
       {estado}
@@ -45,6 +49,52 @@ function EstadoFerias({ estado }: { estado: string }) {
 }
 
 export default function FeriasPage() {
+const [autorizado , setAutorizado] =useState(false)
+const [verificandoAcesso, setVerificandoAcesso] = useState(true)
+const router = useRouter()
+
+
+
+useEffect(()=>{
+ async function verificarAcessoColaborador() {
+try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const role = user?.user_metadata?.role;
+
+        if (role === "colaborador") {
+          setAutorizado(true);
+          
+        } else if (role === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.log("Erro ao verificar utilizador logado", error);
+        router.replace("/login");
+      } finally {
+        setVerificandoAcesso(false);
+      }
+    }
+
+    verificarAcessoColaborador();
+
+
+
+ }, [router])
+
+ if (verificandoAcesso) {
+    return <div className="flex h-screen items-center justify-center text-gray-500">Carregando...</div>;
+  }
+
+  if (!autorizado) {
+    return <div className="flex h-screen items-center justify-center text-blue-600">A redirecionar para o painel administrativo...</div>;
+  }
+
+
+
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
 
@@ -65,12 +115,12 @@ export default function FeriasPage() {
           type="button"
           className="
             inline-flex items-center justify-center
-            gap-2 rounded-md bg-yellow-700
+            gap-2 rounded-md bg-blue-600
             px-4 py-2.5 text-sm font-medium
             text-white shadow-sm transition
-            hover:bg-yellow-600
+            hover:bg-blue-500
             focus:outline-none focus:ring-2
-            focus:ring-yellow-700 focus:ring-offset-2
+            focus:ring-blue-700 focus:ring-offset-2
           "
         >
           <FiPlus size={17} />
@@ -86,10 +136,10 @@ export default function FeriasPage() {
 
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <FiCalendar
                 size={19}
-                className="text-yellow-700"
+                className="text-blue-600"
               />
             </div>
 

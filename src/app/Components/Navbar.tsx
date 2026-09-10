@@ -1,5 +1,6 @@
 "use client";
-
+import { createClient } from "../../../lib/supabase/client";
+import {useRouter} from "next/navigation";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CiLogout, CiSearch } from "react-icons/ci";
@@ -17,6 +18,66 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [saindo, setSaindo] = useState(false);
+  const router = useRouter();
+  const [usuarioLogado, setUsuarioRole] = useState({
+    nome: "Carregando...",
+    cargo: "A verificar..."
+  });
+  
+  async function handleLogout() {
+    setSaindo(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.replace("/login");
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      setSaindo(false);
+    }
+  }
+
+  async function CarregarPerfilNavbar() {
+    try {
+      const supabase = createClient()
+      const {data :{user}} = await supabase.auth.getUser()
+
+      if(!user)return
+
+      const role= user.user_metadata?.role || "Colaborador";
+      const nomeAuth = user.user_metadata?.nome || "Utilizador da intranet"
+
+      if(role === "admin"){
+        setUsuarioRole({
+          nome: nomeAuth,
+          cargo: "Administrador Geral"
+        });
+      }else{
+        const {data: colaborador} =await supabase 
+        .from( "colaboradores")
+        .select("nome , cargo")
+        .eq("usuario_id" , user.id)
+        .single()
+
+        setUsuarioRole({
+            nome:colaborador?.nome || nomeAuth,
+            cargo:colaborador?.cargo || "Colaborador geral"
+          })
+
+      }
+
+     } catch (error) {
+      console.log("Erro ao carregar dados do perfil do usuario" , error )
+     }
+    }
+ 
+
+
+  useEffect(()=>{
+    CarregarPerfilNavbar()
+  }, [])
+
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -55,7 +116,7 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
           <input
             type="search"
             placeholder="Pesquisar colaboradores, pessoas, documentos..."
-            className="w-[250px] rounded-lg border border-gray-300 py-2 pl-11 pr-4 text-sm outline-none transition focus:border-yellow-700 focus:ring-1 focus:ring-yellow-700 lg:w-[500px]"
+            className="w-[250px] rounded-lg border border-gray-300 py-2 pl-11 pr-4 text-sm outline-none transition focus:border-blue-700 focus:ring-1 focus:ring-blue-700 lg:w-[500px]"
           />
         </div>
 
@@ -80,7 +141,7 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
                     type="search"
                     autoFocus
                     placeholder="Pesquisar..."
-                    className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-yellow-700 focus:ring-1 focus:ring-yellow-700"
+                    className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
                   />
                   <button
                     type="button"
@@ -117,12 +178,21 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
             {isProfileOpen && (
               <div className="absolute right-0 top-12 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-lg md:-right-6">
-                <p className="font-medium text-gray-800">Marieth Pascoal</p>
-                <p className="mt-1 text-sm text-gray-500">Assistente de Informática</p>
+               
+                <p className="font-medium text-gray-800" title={usuarioLogado.nome}>{usuarioLogado.nome}</p>
+               
+                <p className="mt-1 text-sm text-gray-500"  title={usuarioLogado.cargo}>{usuarioLogado.cargo}</p>
+                 <label htmlFor="imagem">
+                 <input name="imagem" id="imagem" type="file" />
+                 </label>
                 <div className="my-3 border-t border-gray-100" />
-                <button type="button" className="flex w-full items-center gap-2 rounded-md p-1 text-sm text-red-600 transition hover:bg-red-600/10 hover:text-red-500">
+                <button 
+                disabled={saindo}
+                onClick={handleLogout}
+                type="button"
+                className="flex w-full items-center gap-2 rounded-md p-1 text-sm text-red-600 transition hover:bg-red-600/10 hover:text-red-500">
                   <CiLogout size={20} />
-                  Terminar sessão
+                  {saindo ? "A sair..." : "Terminar sessão"}
                 </button>
               </div>
             )}

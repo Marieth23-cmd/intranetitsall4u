@@ -2,8 +2,10 @@
 import {useState , useEffect} from "react"
 import Image from "next/image";
 import { PiMegaphone } from "react-icons/pi";
-import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import {useRouter} from "next/navigation"
 import Link from "next/link"
+import { createClient } from "../../../lib/supabase/client";
+import AniversariantesCard from "../Components/AniversariantesCard";
 
 const heroSlides = [
   {
@@ -23,129 +25,175 @@ const heroSlides = [
   },
 ];
 
-const comunicados = [
-  {
-    titulo: "Reunião de equipa",
-    data: "20 de maio de 2024 · 10:00 – 11:00",
-    local: "Sala de Conferência A",
-  },
-  {
-    titulo: "Atualização da intranet",
-    data: "22 de maio de 2024 · 14:00",
-    local: "Disponível para todos os colaboradores",
-  },
-];
-
-const aniversariantes = [
-  {
-    nome: "Marieth",
-    data: "23 Dez",
-    imagem:
-      "https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg",
-  },
-  {
-    nome: "João",
-    data: "22 Mai",
-    imagem:
-      "https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg",
-  },
-  {
-    nome: "Ana",
-    data: "25 Mai",
-    imagem:
-      "https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg",
-  },
-];
-
-const eventos = [
-  {
-    mes: "MAI",
-    dia: "15",
-    titulo: "Reunião de equipa",
-    data: "10:00 – 11:00",
-    local: "Sala de Conferência A",
-  },
-  {
-    mes: "MAI",
-    dia: "28",
-    titulo: "Formação de segurança",
-    data: "09:30 – 12:00",
-    local: "Auditório principal",
-  },
-   {
-    mes: "MAI",
-    dia: "28",
-    titulo: "Formação de segurança",
-    data: "09:30 – 12:00",
-    local: "Auditório principal",
-  },
-];
 
 
-const estatisticas=[
-    {
-        numero:"8",
-        titulo:"colaboradores"
-    },
-     {
-        numero:"8",
-        titulo:"documentos"
-    },
-     {
-        numero:"8",
-        titulo:"clientes"
-    },
+type ComunicadoHome = {
+  id_comunicados: number;
+  titulo: string;
+  descricao: string;
+  local: string;
+  data_publicacao: string;
+};
 
-    {
-        numero:"8",
-        titulo:"Projectos Criados"
-    }
-]
-
-
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
-
-const horaAtual = new Date().getHours()
-let saudacao:string;
-
-if(horaAtual>=5 && horaAtual< 12){
-    saudacao= "Bom dia"
-    }else if( horaAtual>= 12 && horaAtual<=18){
-            saudacao="Boa tarde"
-     }else{
-           saudacao="Boa noite"     
-     }
-            
-        
+  const [slideAtual, setSlideAtual] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [autorizado, setAutorizado] = useState(false);
+  const [comunicados, setComunicados] = useState<ComunicadoHome[]>([]);
+  const [primeiroNome , setPrimeiroNome] = useState("Admin")
+  const router = useRouter()
 
 
+  const [contadores , setContadores]=useState(
+    {
+      colaboradores:0,
+      documentos:0,
+      clientes:0,
+      projetos:0
+    }
+  )
 
-const [slideAtual, setSlideAtual] = useState(0);
-const [aniversarianteInicial, setAniversarianteInicial] = useState(0);
 
-const aniversariantesVisiveis = Array.from(
-  { length: Math.min(3, aniversariantes.length) },
-  (_, indice) => aniversariantes[(aniversarianteInicial + indice) % aniversariantes.length],
-);
 
-function navegarAniversariantes(direcao: number) {
-  setAniversarianteInicial((atual) =>
-    (atual + direcao + aniversariantes.length) % aniversariantes.length,
-  );
+  useEffect(() => {
+    async function verificarAcessoAdmin() {
+      try {
+        setLoading(true);
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const role = user?.user_metadata?.role;
+
+        if (role === "admin") {
+          setAutorizado(true);
+        } else {
+          router.replace("/");
+        }
+      } catch (error) {
+        console.error("Erro na verificação de segurança:", error);
+        router.replace("/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    verificarAcessoAdmin();
+  }, [router]);
+
+
+  // 2. Cálculo dinâmico da Saudação horária
+  const horaAtual = new Date().getHours();
+  let saudacao: string;
+
+  if (horaAtual >= 5 && horaAtual < 12) {
+    saudacao = "Bom dia";
+  } else if (horaAtual >= 12 && horaAtual <= 18) {
+    saudacao = "Boa tarde";
+  } else {
+    saudacao = "Boa noite";
+  }
+
+
+async function fetchComunicados() {
+  try {
+    setLoading(true);
+
+    const response = await fetch("/api/comunicados", { cache: "no-store" });
+    const data = await response.json();
+    if (response.ok) {
+      setComunicados(data.comunicados || data || []);
+    }
+  } catch (error) {
+    console.log("Erro ao carregar comunicados:", error);
+  }
+
+  try {
+    const responseDash = await fetch("/api/dashboard", { cache: "no-store" });
+    const dataDash = await responseDash.json();
+    if (responseDash.ok) {
+      setContadores(dataDash);
+    }
+  } catch (error) {
+    console.log("Erro ao carregar contadores do painel:", error);
+  }
+
+  try {
+    const supabase = createClient()
+    const {data:{user}} = await supabase.auth.getUser()
+
+      if(user && user.user_metadata?.nome){
+        const nomeCompleto = user.user_metadata.nome
+        const apenasPrimeiro = nomeCompleto.split(" ")[0]
+        setPrimeiroNome(apenasPrimeiro)
+
+      }
+
+
+  } catch (error) {
+    console.log("Erro ao carregar o utilizador:", error);
+  } finally {
+    setLoading(false);
+  }
 }
 
-useEffect(() => {
-  const intervalo = setInterval(() => {
-    setSlideAtual((atual) =>
-      atual === heroSlides.length - 1
-        ? 0
-        : atual + 1
-    );
-  }, 5000);
 
-  return () => clearInterval(intervalo);
-}, []);
+
+  useEffect(() => {
+    fetchComunicados();
+  }, []);
+
+
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setSlideAtual((atual) =>
+        atual === heroSlides.length - 1 ? 0 : atual + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, []);
+
+  // Travas de segurança antes de desenhar o conteúdo do painel.
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center text-gray-500">A verificar credenciais...</div>;
+  }
+
+  if (!autorizado) {
+    return <div className="flex h-screen items-center justify-center text-red-600 font-medium">Acesso não autorizado! Redirecionando...</div>;
+  }
+
+  //  Extração Dinâmica do Comunicado Mais Recente
+  const comunicadoMaisRecente = comunicados && comunicados.length > 0 ? comunicados[0] : null;
+  const tituloBanner = comunicadoMaisRecente ? comunicadoMaisRecente.titulo : "Bem-vindo à intranet Itsall4u";
+  
+  // Alterado aqui: Trocado de .local para .descricao para mostrar a notícia de verdade!
+  const descricaoBanner = comunicadoMaisRecente ? comunicadoMaisRecente.descricao : "Últimas informações da empresa";
+
+
+
+  function limitarTexto (texto:string , limite =50){
+    if(texto.length <= limite){
+      return texto;
+    }
+    return `${texto.slice(0, limite).trim()}...`
+  }
+
+
+  // Trava profissional enquanto o banco responde
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen text-gray-500">A carregar portal...</div>;
+  }
+
+
+
+    if(!primeiroNome){
+      return(
+        <div>  </div>
+      )
+    
+    }
+
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
@@ -153,7 +201,7 @@ useEffect(() => {
       {/* Cabeçalho */}
       <header>
         <h1 className="text-2xl font-semibold text-black sm:text-3xl">
-          {saudacao}, Admin
+          {saudacao}, {primeiroNome}
         </h1>
 
         <p className="mt-2 text-sm text-gray-500 sm:text-base">
@@ -174,13 +222,11 @@ useEffect(() => {
             </span>
 
             <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
-              A partir de Agosto, os colaboradores terão direito a pequeno
-              almoço e almoço.
+              {tituloBanner}
             </h2>
 
             <p className="mt-4 text-sm leading-6 text-white/90">
-              Esta implementação visa melhorar o bem-estar dos colaboradores
-              e promover um ambiente de trabalho mais saudável e produtivo.
+              {descricaoBanner}
             </p>
 
             <span className="mt-6 text-xs text-white/60">
@@ -207,24 +253,33 @@ useEffect(() => {
         </div>
       </section>
 
-         {/* estatisticas */}
 
-         <section  className="mt-6 ">
+         {/* SEÇÃO DE ESTATÍSTICAS DINÂMICAS */}
+<section className="mt-6">
+  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2   ">
-                {estatisticas.map((estatistica , chave)=>(
-                     <div key={chave} className="bg-white border border-gray-200 px-3 py-5 shadow-sm rounded-lg text-center">
-                        <h1 className="text-lg md:text-xl text-black">{estatistica.numero}</h1>
-                        <p className="text-gray-700">{estatistica.titulo}</p>
+    {[
+      { numero: contadores.colaboradores, titulo: "Colaboradores" },
+      { numero: contadores.documentos, titulo: "Documentos" },
+      { numero: contadores.clientes, titulo: "Clientes" },
+      { numero: contadores.projetos, titulo: "Projectos Criados" } 
+    ].map((estatistica, chave) => (
+      <div 
+        key={chave} 
+        className="bg-white border border-gray-200 px-3 py-5 shadow-sm rounded-lg text-center"
+      >
+        <h1 className="text-xl md:text-2xl font-semibold text-black">
+          {estatistica.numero}
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {estatistica.titulo}
+        </p>
+      </div>
+    ))}
 
-                </div>)) 
-                   
-                    }
-               
-            </div>
+  </div>
+</section>
 
-
-         </section>
 
 
         
@@ -246,17 +301,25 @@ useEffect(() => {
               </p>
             </div>
 
-           <Link href="/documentos"  className="cursor-pointer text-sm text-yellow-700 hover:text-yellow-600">Ver todos</Link>
+           <Link href="/comunicados"  className="cursor-pointer text-sm text-blue-700 hover:text-blue-600">Ver todos</Link>
           </div>
 
 
           <div className="mt-5 space-y-3">
 
-            {comunicados.map((comunicado) => (
-              <div
+            {comunicados.slice(0, 3).map((comunicado) => {
+              const dataPublicacao = new Date(comunicado.data_publicacao);
+              const dataFormatada = dataPublicacao.toLocaleDateString("pt-PT", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              });
+
+              return (
+                <div
                 key={comunicado.titulo}
                 className="flex items-start gap-4 rounded-lg border border-gray-100 p-4 transition hover:bg-gray-50"
-              >
+                >
 
                 {/* Ícone */}
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
@@ -271,11 +334,14 @@ useEffect(() => {
                 <div className="min-w-0">
 
                   <h3 className="text-sm font-medium text-gray-700">
-                    {comunicado.titulo}
+                    {comunicado.titulo }
                   </h3>
+                <p className="text-sm text-gray-500">
+                  {limitarTexto(comunicado.descricao, 50)}
+                </p>
 
                   <p className="mt-1 text-xs text-gray-700">
-                    {comunicado.data}
+                    {dataFormatada}
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
@@ -284,163 +350,18 @@ useEffect(() => {
 
                 </div>
 
-              </div>
-            ))}
-
-          </div>
-
-        </article>
-
-
-        {/* Aniversariantes */}
-        <article className="rounded-xl bg-white p-5 shadow-sm sm:p-6">
-
-          <div className="flex items-center justify-between">
-
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Aniversariantes              </h2>
-
-              <p className="mt-1 text-sm text-gray-700">
-                Próximos aniversários
-              </p>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label="Aniversariantes anteriores"
-                onClick={() => navegarAniversariantes(-1)}
-                disabled={aniversariantes.length <= 3}
-                className="rounded-md p-1 text-yellow-700 transition hover:text-yellow-600 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <FiChevronLeft size={20} />
-              </button>
-              <button
-                type="button"
-                aria-label="Próximos aniversariantes"
-                onClick={() => navegarAniversariantes(1)}
-                disabled={aniversariantes.length <= 3}
-                className="rounded-md p-1 text-yellow-700 transition hover:text-yellow-600 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <FiChevronRight size={20} />
-              </button>
-            </div>
-
-          </div>
-
-
-          {/* Pessoas */}
-          <div className="mt-8 flex justify-around">
-
-            {aniversariantesVisiveis.map((pessoa) => (
-              <div
-                key={pessoa.nome}
-                className="flex flex-col items-center text-center"
-              >
-
-                <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-gray-100">
-                  <Image
-                    src={pessoa.imagem}
-                    alt={pessoa.nome}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
                 </div>
-
-                <p className="mt-3 text-sm font-medium text-gray-700">
-                  {pessoa.nome}
-                </p>
-
-                <p className="mt-1 text-xs text-gray-500">
-                  {pessoa.data}
-                </p>
-
-              </div>
-            ))}
+              );
+            })}
 
           </div>
 
         </article>
+
+        <AniversariantesCard />
 
       </section>
 
-
-      {/* PRÓXIMOS EVENTOS */}
-      <section className="mt-6">
-
-        <article className="rounded-xl bg-white p-5 shadow-sm sm:p-6">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-              <FiCalendar
-                size={19}
-                className="text-gray-600"
-              />
-            </div>
-
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Próximos eventos
-              </h2>
-
-              <p className="text-sm text-gray-700">
-                Eventos e atividades da empresa
-              </p>
-            </div>
-
-          </div>
-
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-
-            {eventos.map((evento) => (
-              <div
-                key={`${evento.mes}-${evento.dia}-${evento.titulo}`}
-                className="flex items-center gap-4 rounded-lg border border-gray-100 p-4"
-              >
-
-                {/* Data */}
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-gray-50 text-center">
-
-                  <span className="text-[10px] font-medium text-gray-500">
-                    {evento.mes}
-                  </span>
-
-                  <span className="text-xl font-semibold text-gray-700">
-                    {evento.dia}
-                  </span>
-
-                </div>
-
-
-                {/* Informação */}
-                <div>
-
-                  <h3 className="text-sm font-medium text-gray-700">
-                    {evento.titulo}
-                  </h3>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    {evento.data}
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    {evento.local}
-                  </p>
-
-                </div>
-
-              </div>
-            ))}
-
-          </div>
-
-        </article>
-
-      </section>
 
     </main>
   );
