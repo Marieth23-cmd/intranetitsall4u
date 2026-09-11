@@ -3,7 +3,7 @@ import { createClient } from "../../../../lib/supabase/server";
 import { cookies } from "next/headers";
 
 
-
+export const dynamic = 'force-dynamic';
 export async function  POST(request:Request) {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
