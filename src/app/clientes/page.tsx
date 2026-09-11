@@ -4,8 +4,6 @@ import {useRouter} from "next/navigation"
 import { createClient } from "../../../lib/supabase/client";
 
 
-
-
 type clientes = {
   nome: string;
   area: string;
@@ -116,7 +114,6 @@ export default function ClientesPage() {
   }
 
 
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       <header>
@@ -124,21 +121,6 @@ export default function ClientesPage() {
         <p className="mt-1 text-sm text-gray-500">Pesquise clientes e informações autorizadas.</p>
       </header>
 
-      <form role="search" className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label htmlFor="pesquisa-clientes" className="sr-only">Pesquisar clientes</label>
-        <input
-          id="pesquisa-clientes"
-          type="search"
-          placeholder="Pesquisar clientes"
-          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-700 focus:ring-1 focus:ring-blue-700 sm:max-w-md"
-        />
-        <button
-          type="submit"
-          className="inline-flex w-full items-center justify-center rounded-md bg-blue-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 sm:w-auto"
-        >
-          Pesquisar
-        </button>
-      </form>
 
       {/* Cartões no telemóvel: evitam uma tabela comprimida ou com scroll lateral. */}
       <div className="mt-6 space-y-3 md:hidden">

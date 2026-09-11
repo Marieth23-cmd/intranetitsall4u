@@ -1,6 +1,6 @@
 "use client";
 import {useState, useEffect} from "react";
-import { FiPlus,FiEdit2,} from "react-icons/fi";
+import { FiPlus,FiEdit2, FiSearch} from "react-icons/fi";
 
 type clientes = {
   id_cliente: number;
@@ -36,6 +36,7 @@ export default function ClientesAdminPage() {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState<string | null>(null);
  const [modalAberto, setModalAberto] = useState(false);
+ const [termoPesquisa, setTermoPesquisa] = useState("");
  const [novoCliente, setNovoCliente] = useState({
   nome: "",
   area: "",
@@ -70,6 +71,15 @@ export default function ClientesAdminPage() {
 useEffect(() => {
   fetchClientes();
 }, []);
+
+const clientesFiltrados = clientes.filter((cliente) => {
+  const termo = termoPesquisa.trim().toLocaleLowerCase();
+  if (!termo) return true;
+
+  return [cliente.nome, cliente.area, cliente.estado]
+    .filter(Boolean)
+    .some((valor) => valor.toLocaleLowerCase().includes(termo));
+});
 
 
 const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -145,10 +155,21 @@ if(loading){
 
       </header>
 
+      <div className="relative mt-6 max-w-md">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+        <input
+          type="search"
+          value={termoPesquisa}
+          onChange={(event) => setTermoPesquisa(event.target.value)}
+          placeholder="Filtrar clientes por nome ou área"
+          className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+        />
+      </div>
+
       {/* Mobile */}
       <div className="mt-6 space-y-3 md:hidden">
 
-        {clientes.map((cliente) => (
+        {clientesFiltrados.map((cliente) => (
 
           <article
             key={cliente.nome}
@@ -261,7 +282,7 @@ if(loading){
 
           <tbody>
 
-            {clientes.map((cliente) => (
+            {clientesFiltrados.map((cliente) => (
 
               <tr
                 key={cliente.nome}
