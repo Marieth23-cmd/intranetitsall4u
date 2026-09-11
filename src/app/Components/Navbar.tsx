@@ -2,11 +2,12 @@
 import { createClient } from "../../../lib/supabase/client";
 import {useRouter} from "next/navigation";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CiLogout, CiSearch } from "react-icons/ci";
 import { FaBars } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { MdOutlineNotificationsNone } from "react-icons/md";
+import { toast } from "sonner";
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -20,6 +21,8 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
   const searchRef = useRef<HTMLDivElement>(null);
   const [saindo, setSaindo] = useState(false);
   const router = useRouter();
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [usuarioLogado, setUsuarioRole] = useState({
     nome: "Carregando...",
     cargo: "A verificar..."
@@ -47,6 +50,7 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
       const role= user.user_metadata?.role || "Colaborador";
       const nomeAuth = user.user_metadata?.nome || "Utilizador da intranet"
+      setFotoUrl(user.user_metadata?.foto_url || null);
 
       if(role === "admin"){
         setUsuarioRole({
@@ -93,6 +97,75 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [handleClickOutside]);
+
+
+async function handleUploadFoto(
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  const ficheiro = event.target.files?.[0];
+
+  if (!ficheiro) return;
+
+  if (!ficheiro.type.startsWith("image/")) {
+    toast.error("Seleciona apenas uma imagem.");
+    return;
+  }
+
+  if (ficheiro.size > 2 * 1024 * 1024) {
+    toast.error("A imagem não pode ultrapassar 2 MB.");
+    return;
+  }
+
+  try {
+    setEnviandoFoto(true);
+
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Utilizador não autenticado.");
+    }
+
+    const extensao = ficheiro.name.split(".").pop();
+    const caminho = `${user.id}/avatar.${extensao}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(caminho, ficheiro, {
+        upsert: true,
+        contentType: ficheiro.type,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(caminho);
+
+    const urlFoto = data.publicUrl;
+
+    setFotoUrl(urlFoto);
+
+    await supabase.auth.updateUser({
+      data: {
+        foto_url: urlFoto,
+      },
+    });
+
+    toast.success("Foto atualizada com sucesso!");
+  } catch (error) {
+    console.error("Erro ao enviar foto:", error);
+    toast.error("Não foi possível enviar a foto.");
+  } finally {
+    setEnviandoFoto(false);
+  }
+}
+
 
   return (
     <header
@@ -167,13 +240,23 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
               onClick={() => setIsProfileOpen((aberto) => !aberto)}
               className="rounded-full"
             >
-              <Image
-                src="https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg"
-                alt="Avatar"
-                width={40}
-                height={40}
-                className="h-8 w-8 rounded-full"
-              />
+              {fotoUrl ? (
+                // URL dinâmica do Supabase Storage; não pode ser configurada como domínio fixo do next/image.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={fotoUrl}
+                  alt="Avatar"
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <Image
+                  src="https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg"
+                  alt="Avatar"
+                  width={40}
+                  height={40}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              )}
             </button>
 
             {isProfileOpen && (
@@ -183,7 +266,14 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
                
                 <p className="mt-1 text-sm text-gray-500"  title={usuarioLogado.cargo}>{usuarioLogado.cargo}</p>
                  <label htmlFor="imagem">
-                 <input name="imagem" id="imagem" type="file" />
+                    <input
+                      name="imagem"
+                      id="imagem"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleUploadFoto}
+                      disabled={enviandoFoto}
+                    />
                  </label>
                 <div className="my-3 border-t border-gray-100" />
                 <button 
