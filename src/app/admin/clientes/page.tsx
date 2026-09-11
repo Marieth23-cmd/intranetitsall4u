@@ -36,6 +36,8 @@ export default function ClientesAdminPage() {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState<string | null>(null);
  const [modalAberto, setModalAberto] = useState(false);
+  const [clienteEditando, setClienteEditando] = useState<clientes | null>(null);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
  const [termoPesquisa, setTermoPesquisa] = useState("");
  const [novoCliente, setNovoCliente] = useState({
   nome: "",
@@ -111,6 +113,52 @@ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError("Erro ao criar cliente. Tente novamente mais tarde.");
   }
 }
+
+const abrirEdicao = (cliente: clientes) => {
+  setError(null);
+  setClienteEditando(cliente);
+};
+
+const handleEditar = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  if (!clienteEditando) return;
+
+  try {
+    setSalvandoEdicao(true);
+    setError(null);
+
+    const response = await fetch("/api/clientes", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id_cliente: clienteEditando.id_cliente,
+        nome: clienteEditando.nome,
+        area: clienteEditando.area,
+        projetos: clienteEditando.projetos,
+        estado: clienteEditando.estado,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao atualizar cliente.");
+    }
+
+    setClientes((prevClientes) =>
+      prevClientes.map((cliente) =>
+        cliente.id_cliente === data.cliente.id_cliente ? data.cliente : cliente
+      )
+    );
+    setClienteEditando(null);
+  } catch (error) {
+    console.error("Erro ao atualizar cliente:", error);
+    setError(error instanceof Error ? error.message : "Erro ao atualizar cliente.");
+  } finally {
+    setSalvandoEdicao(false);
+  }
+};
 
 
 
@@ -220,6 +268,7 @@ if(loading){
 
               <button
                 type="button"
+                onClick={() => abrirEdicao(cliente)}
                 className="
                   inline-flex w-full items-center
                   justify-center gap-2
@@ -311,6 +360,7 @@ if(loading){
 
                     <button
                       type="button"
+                      onClick={() => abrirEdicao(cliente)}
                       title="Editar cliente"
                       className="
                         rounded-md border border-gray-200
@@ -408,6 +458,79 @@ if(loading){
                   className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
                 >
                   Adicionar Cliente
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {clienteEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gray-800">Editar cliente</h2>
+
+            <form className="mt-4 space-y-4" onSubmit={handleEditar}>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={clienteEditando.nome}
+                  onChange={(event) => setClienteEditando({ ...clienteEditando, nome: event.target.value })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Área</label>
+                <input
+                  type="text"
+                  required
+                  value={clienteEditando.area}
+                  onChange={(event) => setClienteEditando({ ...clienteEditando, area: event.target.value })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Projetos</label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={clienteEditando.projetos}
+                  onChange={(event) => setClienteEditando({ ...clienteEditando, projetos: Number(event.target.value) })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600">Estado</label>
+                <select
+                  required
+                  value={clienteEditando.estado}
+                  onChange={(event) => setClienteEditando({ ...clienteEditando, estado: event.target.value as "ativo" | "inativo" })}
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                >
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+
+              {error && <p className="text-xs text-red-600">{error}</p>}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setClienteEditando(null)}
+                  className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoEdicao}
+                  className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {salvandoEdicao ? "A guardar..." : "Guardar alterações"}
                 </button>
               </div>
             </form>

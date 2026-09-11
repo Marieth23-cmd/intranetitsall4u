@@ -118,7 +118,7 @@ export default function ClientesPage() {
     <div className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       <header>
         <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">Clientes</h1>
-        <p className="mt-1 text-sm text-gray-500">Pesquise clientes e informações autorizadas.</p>
+      
       </header>
 
 
