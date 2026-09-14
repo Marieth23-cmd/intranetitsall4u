@@ -124,7 +124,7 @@ try {
             {comunicado.titulo}
           </h2>
 
-          <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
             {comunicado.usuarios?.email || "Sistema"}
           </span>
         </div>
