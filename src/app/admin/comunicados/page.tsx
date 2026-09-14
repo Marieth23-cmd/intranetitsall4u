@@ -269,16 +269,15 @@ async function eliminarComunicado(idComunicado: number) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
           <div className="max-w-3xl">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-gray-800">
-                {comunicado.titulo}
-              </h2>
+             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <h2 className="text-lg font-semibold text-gray-800">
+            {comunicado.titulo}
+          </h2>
 
-              <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                {comunicado.usuarios?.email || "Sistema"}
-              </span>
-            </div>
-
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+            {comunicado.usuarios?.email || "Sistema"}
+          </span>
+        </div>
             <p className="mt-2 text-sm leading-6 text-gray-500">
               {comunicado.descricao}
             </p>
