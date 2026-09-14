@@ -119,7 +119,7 @@ try {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
           <div className="max-w-3xl">
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <h2 className="text-lg font-semibold text-gray-800">
             {comunicado.titulo}
           </h2>

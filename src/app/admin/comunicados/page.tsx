@@ -19,6 +19,15 @@ type Comunicado = {
   } | null;
 };
 
+type VisualizacaoLeitor = {
+  data_visualizacao: string;
+  colaboradores: {
+    nome: string;
+    cargo: string | null;
+  }[] | null;
+};
+
+
 
 export default function ComunicadosAdminPage() {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
@@ -28,15 +37,12 @@ export default function ComunicadosAdminPage() {
   const [autorizado, setAutorizado] = useState(false);
   const [verificandoAcesso, setVerificandoAcesso] = useState(true)
   const router = useRouter()
-  
  const [form, setForm] = useState({
   titulo: "",
   descricao: "",
   local: "",
  })
 
-
-   // 🟢 ESTADOS EXCLUSIVOS PARA EDIÇÃO DE COMUNICADOS
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
   const [comunicadoSelecionado, setComunicadoSelecionado] = useState({
     id_comunicados: 0,
@@ -46,6 +52,37 @@ export default function ComunicadosAdminPage() {
   });
 
 
+// 1. Estados e Tipagem explícita para evitar o erro do "any"
+const [leitores, setLeitores] = useState<VisualizacaoLeitor[]>([]);
+const [modalLeitoresAberto, setModalLeitoresAberto] = useState(false);
+
+async function verQuemViu(id_comunicado: number) {
+  try {
+    const supabase = createClient(); // Seu cliente do navegador
+
+    // Faz o JOIN triplo perfeito direto do cliente
+    const { data, error } = await supabase
+      .from("visualizacoes_comunicados")
+      .select(`
+        data_visualizacao,
+        colaboradores (
+          nome,
+          cargo
+        )
+      `)
+      .eq("comunicado_id", id_comunicado);
+
+    if (!error) {
+      setLeitores((data as VisualizacaoLeitor[]) || []);
+      setModalLeitoresAberto(true);
+    } else {
+      console.error("Erro do Supabase ao buscar leitores:", error.message);
+      toast.error("Não foi possível carregar os leitores.");
+    }
+  } catch (error) {
+    console.error("Erro ao buscar leitores:", error);
+  }
+}
 
 
   useEffect(() => {
@@ -290,8 +327,10 @@ async function eliminarComunicado(idComunicado: number) {
           {/* Ações */}
           <div className="flex items-center gap-2">
             <button
+              onClick={() => void verQuemViu(comunicado.id_comunicados)}
               className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
               title="Visualizar"
+              aria-label={`Ver quem leu ${comunicado.titulo}`}
             >
               <FiEye size={18} />
             </button>
@@ -350,6 +389,17 @@ async function eliminarComunicado(idComunicado: number) {
             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
             rows={3}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600">Local / Alvo</label>
+          <input
+            type="text"
+            value={form.local}
+            onChange={(e) => setForm({ ...form, local: e.target.value })}
+            className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            placeholder="Ex.: Toda a empresa"
           />
         </div>
 
@@ -454,6 +504,52 @@ async function eliminarComunicado(idComunicado: number) {
   </div>
 )}
 
+
+{/* MODAL DE CONFIRMADOS DE LEITURA */}
+{modalLeitoresAberto && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+      <h2 className="text-lg font-semibold text-gray-900">Lido por</h2>
+      <p className="text-xs text-gray-500 mt-1">Colaboradores que abriram este comunicado.</p>
+
+      <div className="mt-4 max-h-60 overflow-y-auto space-y-3 pr-1">
+        {leitores.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Nenhum colaborador viu ainda. 👁️</p>
+        ) : (
+          leitores.map((leitor, index) => {
+            const colaboradorInfo = leitor.colaboradores?.[0];
+
+            return (
+              <div key={index} className="flex items-center justify-between border-b border-gray-50 pb-2 text-sm">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 truncate">
+                    {colaboradorInfo?.nome || "Funcionário Desconhecido"}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {colaboradorInfo?.cargo || "Colaborador"}
+                  </p>
+                </div>
+                
+                <span className="text-[11px] text-gray-400 font-medium shrink-0 ml-2">
+                  {leitor.data_visualizacao
+                    ? new Date(leitor.data_visualizacao).toLocaleDateString("pt-PT")
+                    : "—"}
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <button
+        onClick={() => setModalLeitoresAberto(false)}
+        className="mt-6 w-full rounded-md border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 cursor-pointer"
+      >
+        Fechar Janela
+      </button>
+    </div>
+  </div>
+)}
 
 
 

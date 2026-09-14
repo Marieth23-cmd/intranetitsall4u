@@ -4,7 +4,7 @@ import {useRouter} from "next/navigation";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CiLogout, CiSearch } from "react-icons/ci";
-import { FaBars } from "react-icons/fa";
+import { FaBars, FaImage } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { MdOutlineNotificationsNone } from "react-icons/md";
 import { toast } from "sonner";
@@ -429,7 +429,7 @@ async function handleUploadFoto(
                 <p className="font-semibold text-sm text-gray-800 truncate" title={usuarioLogado.nome}>
                   {usuarioLogado.nome}
                 </p>
-                <p className="text-xs text-gray-400 truncate mt-0.5" title={usuarioLogado.cargo}>
+                <p className="text-xs text-gray-500 truncate mt-0.5" title={usuarioLogado.cargo}>
                   {usuarioLogado.cargo}
                 </p>
 
@@ -437,9 +437,9 @@ async function handleUploadFoto(
                 <div className="mt-3">
                   <label 
                     htmlFor="imagem" 
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                    className="flex w-full items-start justify-start gap-2 rounded-md border border-gray-50  px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100 cursor-pointer disabled:opacity-50"
                   >
-                    <span>{enviandoFoto ? "A carregar..." : "Alterar foto de perfil"}</span>
+                    <span className="flex  gap-1 text-start"><FaImage size={15}/> {enviandoFoto ? "A carregar..." : "Carregar imagem "}</span>
                     <input
                       name="imagem"
                       id="imagem"
@@ -447,7 +447,7 @@ async function handleUploadFoto(
                       accept="image/png,image/jpeg,image/webp"
                       onChange={handleUploadFoto}
                       disabled={enviandoFoto}
-                      className="hidden" // Esconde o botão cinzento padrão
+                      className="hidden"
                     />
                   </label>
                 </div>
