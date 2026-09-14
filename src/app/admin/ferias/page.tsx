@@ -99,7 +99,7 @@ export default function FeriasAdminPage() {
  async function carregarPedidos() {
     try {
       setLoading(true);
-      const resposta = await fetch("/api/admin/ferias", { cache: "no-store" });
+      const resposta = await fetch("/api/ferias", { cache: "no-store" });
       const dados = await resposta.json();
       if (resposta.ok) {
         setPedidos(dados.pedidos || []);
@@ -113,7 +113,7 @@ export default function FeriasAdminPage() {
 
   async function responderPedido(id_ferias: string, decisao: "aprovado" | "reprovado") {
     try {
-      const resposta = await fetch("/api/admin/ferias", {
+      const resposta = await fetch("/api/ferias", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_ferias, novo_estado: decisao }),
