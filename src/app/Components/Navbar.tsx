@@ -4,10 +4,11 @@ import {useRouter} from "next/navigation";
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CiLogout, CiSearch } from "react-icons/ci";
-import { FaBars, FaImage } from "react-icons/fa";
+import { FaBars, FaImage, FaRegUserCircle } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { MdOutlineNotificationsNone } from "react-icons/md";
 import { toast } from "sonner";
+
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -47,7 +48,8 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
   const [role, setRole] = useState<Role>("colaborador");
   const [usuarioLogado, setUsuarioRole] = useState({
     nome: "Carregando...",
-    cargo: "A verificar..."
+    cargo: "A verificar...",
+    foto_url:""
   });
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -69,7 +71,32 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
   useEffect(() => {
     carregarNotificacoes();
+    const intervalo = window.setInterval(carregarNotificacoes, 30000);
+
+    return () => window.clearInterval(intervalo);
   }, []);
+
+  const notificacoesNaoLidas = notificacoes.filter((notificacao) => !notificacao.lida);
+
+  async function marcarNotificacaoComoLida(idNotificacao: string) {
+    try {
+      const resposta = await fetch("/api/notificacoes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_notificacao: idNotificacao }),
+      });
+
+      if (resposta.ok) {
+        setNotificacoes((atuais) => atuais.map((notificacao) =>
+          notificacao.id_notificacao === idNotificacao
+            ? { ...notificacao, lida: true }
+            : notificacao
+        ));
+      }
+    } catch (error) {
+      console.error("Erro ao marcar notificação como lida:", error);
+    }
+  }
 
   
   async function handleLogout() {
@@ -85,6 +112,9 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
     }
   }
 
+  
+  
+
   async function CarregarPerfilNavbar() {
     try {
       const supabase = createClient()
@@ -92,40 +122,43 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
       if(!user)return
 
-      const role= user.user_metadata?.role || "Colaborador";
+      const role = user.user_metadata?.role || "Colaborador";
       const nomeAuth = user.user_metadata?.nome || "Utilizador da intranet"
+      
+      // 🟢 As tuas validações originais mantidas 100% intactas:
       setRole(role === "admin" ? "admin" : "colaborador");
       setFotoUrl(user.user_metadata?.foto_url || null);
 
       if(role === "admin"){
         setUsuarioRole({
           nome: nomeAuth,
-          cargo: "Administrador Geral"
+          cargo: "Administrador Geral",
+          foto_url: user.user_metadata?.foto_url || "" // 🟢 Puxa do Auth para o admin
         });
-      }else{
-        const {data: colaborador} =await supabase 
-        .from( "colaboradores")
-        .select("nome , cargo")
-        .eq("usuario_id" , user.id)
-        .single()
+      } else {
+        // 🟢 Ajeitado: Agora o teu select também traz a coluna 'foto_url' do banco
+        const {data: colaborador} = await supabase 
+          .from("colaboradores")
+          .select("nome, cargo, foto_url")
+          .eq("usuario_id", user.id)
+          .maybeSingle()
 
         setUsuarioRole({
-            nome:colaborador?.nome || nomeAuth,
-            cargo:colaborador?.cargo || "Colaborador geral"
-          })
-
+          nome: colaborador?.nome || nomeAuth,
+          cargo: colaborador?.cargo || "Colaborador geral",
+          foto_url: colaborador?.foto_url || user.user_metadata?.foto_url || "" // 🟢 Puxa do banco ou fallback do Auth
+        })
       }
 
-     } catch (error) {
-      console.log("Erro ao carregar dados do perfil do usuario" , error )
-     }
+    } catch (error) {
+      console.log("Erro ao carregar dados do perfil do usuario", error)
     }
- 
+  }
 
-
-  useEffect(()=>{
+  useEffect(() => {
     CarregarPerfilNavbar()
   }, [])
+
 
 
 
@@ -214,7 +247,18 @@ async function handleUploadFoto(
       throw new Error("Utilizador não autenticado.");
     }
 
-    const extensao = ficheiro.name.split(".").pop();
+    const extensoesPorTipo: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    };
+    const extensao = extensoesPorTipo[ficheiro.type];
+
+    if (!extensao) {
+      toast.error("Formato não suportado. Use PNG, JPG ou WEBP.");
+      return;
+    }
+
     const caminho = `${user.id}/avatar.${extensao}`;
 
     const { error: uploadError } = await supabase.storage
@@ -236,16 +280,36 @@ async function handleUploadFoto(
 
     setFotoUrl(urlFoto);
 
+    setUsuarioRole((antigo) => ({
+      ...antigo,
+      foto_url: urlFoto
+    }));
+
     await supabase.auth.updateUser({
       data: {
         foto_url: urlFoto,
       },
     });
 
+     const { data: { user: usuarioAtual } } = await supabase.auth.getUser();
+    if (usuarioAtual && usuarioAtual.user_metadata?.role !== "admin") {
+      const { error: perfilError } = await supabase
+        .from("colaboradores")
+        .update({ foto_url: urlFoto })
+        .eq("usuario_id", usuarioAtual.id);
+
+      if (perfilError) {
+        throw perfilError;
+      }
+    }
+
     toast.success("Foto atualizada com sucesso!");
+
+
   } catch (error) {
     console.error("Erro ao enviar foto:", error);
-    toast.error("Não foi possível enviar a foto.");
+    const mensagem = error instanceof Error ? error.message : "Erro desconhecido no Storage";
+    toast.error(`Não foi possível enviar a foto: ${mensagem}`);
   } finally {
     setEnviandoFoto(false);
   }
@@ -365,8 +429,10 @@ async function handleUploadFoto(
               className="rounded-full p-1 text-gray-600 hover:bg-gray-100 relative cursor-pointer"
             >
               <MdOutlineNotificationsNone size={24} />
-              {notificacoes.filter(n => !n.lida).length > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-600" />
+              {notificacoesNaoLidas.length > 0 && (
+                <span className="absolute -right-1 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold leading-none text-white">
+                  {notificacoesNaoLidas.length > 99 ? "99+" : notificacoesNaoLidas.length}
+                </span>
               )}
             </button>
 
@@ -376,7 +442,7 @@ async function handleUploadFoto(
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                   <h3 className="font-semibold text-sm text-gray-800">Notificações</h3>
                   <span className="text-[11px] bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded-full">
-                    {notificacoes.filter(n => !n.lida).length} Novas
+                    {notificacoesNaoLidas.length} Novas
                   </span>
                 </div>
 
@@ -385,13 +451,18 @@ async function handleUploadFoto(
                     <p className="text-xs text-gray-400 text-center py-6">Nenhuma notificação por aqui. </p>
                   ) : (
                     notificacoes.map((item) => (
-                      <div key={item.id_notificacao} className={`py-2.5 text-xs ${!item.lida ? 'bg-blue-50/30 -mx-2 px-2 rounded' : ''}`}>
+                      <button
+                        key={item.id_notificacao}
+                        type="button"
+                        onClick={() => void marcarNotificacaoComoLida(item.id_notificacao)}
+                        className={`block w-full py-2.5 text-left text-xs ${!item.lida ? 'bg-blue-50/30 -mx-2 w-[calc(100%+1rem)] rounded px-2' : ''}`}
+                      >
                         <p className="font-semibold text-gray-800">{item.titulo}</p>
                         <p className="text-gray-500 mt-0.5 leading-normal">{item.mensagem}</p>
                         <span className="text-[10px] text-gray-400 block mt-1">
                           {new Date(item.data_criacao).toLocaleDateString("pt-PT")}
                         </span>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>
@@ -411,16 +482,12 @@ async function handleUploadFoto(
                 <Image
                   src={fotoUrl}
                   alt="Avatar"
-                  className="h-9 w-8 rounded-full object-cover border border-gray-200 shadow-sm"
+                  width={50}
+                  height={40}
+                  className="h-8 w-8 rounded-full object-cover border border-gray-200 shadow-sm"
                 />
               ) : (
-                <Image
-                  src="https://res.cloudinary.com/dhpa1juyr/image/upload/v1772111593/Alicia_zzjgz2.jpg"
-                  alt="Avatar"
-                  width={40}
-                  height={40}
-                  className="h-9 w-9 rounded-full object-cover border border-gray-200 shadow-sm"
-                />
+               <FaRegUserCircle size={24}/>
               )}
             </button>
 

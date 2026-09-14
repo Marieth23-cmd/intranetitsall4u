@@ -8,7 +8,7 @@ import {useRouter} from "next/navigation"
 
 
 type Comunicado = {
-  id_comunicados: number;
+  id_comunicados: string;
   titulo: string;
   descricao: string;
   local: string;
@@ -45,7 +45,7 @@ export default function ComunicadosAdminPage() {
 
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
   const [comunicadoSelecionado, setComunicadoSelecionado] = useState({
-    id_comunicados: 0,
+    id_comunicados: "",
     titulo: "",
     descricao: "",
     local: ""
@@ -56,28 +56,18 @@ export default function ComunicadosAdminPage() {
 const [leitores, setLeitores] = useState<VisualizacaoLeitor[]>([]);
 const [modalLeitoresAberto, setModalLeitoresAberto] = useState(false);
 
-async function verQuemViu(id_comunicado: number) {
+async function verQuemViu(id_comunicado: string) {
   try {
-    const supabase = createClient(); // Seu cliente do navegador
+    const resposta = await fetch(`/api/visualizacoes?id_comunicado=${encodeURIComponent(id_comunicado)}`, {
+      cache: "no-store",
+    });
+    const dados = await resposta.json();
 
-    // Faz o JOIN triplo perfeito direto do cliente
-    const { data, error } = await supabase
-      .from("visualizacoes_comunicados")
-      .select(`
-        data_visualizacao,
-        colaboradores (
-          nome,
-          cargo
-        )
-      `)
-      .eq("comunicado_id", id_comunicado);
-
-    if (!error) {
-      setLeitores((data as VisualizacaoLeitor[]) || []);
+    if (resposta.ok) {
+      setLeitores(dados.leitores || []);
       setModalLeitoresAberto(true);
     } else {
-      console.error("Erro do Supabase ao buscar leitores:", error.message);
-      toast.error("Não foi possível carregar os leitores.");
+      toast.error(dados.error || "Não foi possível carregar os leitores.");
     }
   } catch (error) {
     console.error("Erro ao buscar leitores:", error);
@@ -173,7 +163,7 @@ async function verQuemViu(id_comunicado: number) {
 
 
     
-function confirmarEliminacao(idComunicado: number) {
+function confirmarEliminacao(idComunicado: string) {
   toast("Tem a certeza que deseja eliminar este comunicado?", {
     duration: 5000,
     action: {
@@ -189,7 +179,7 @@ function confirmarEliminacao(idComunicado: number) {
   });
 }
 
-async function eliminarComunicado(idComunicado: number) {
+async function eliminarComunicado(idComunicado: string) {
   try {
     const resposta = await fetch("/api/comunicados", {
       method: "DELETE",

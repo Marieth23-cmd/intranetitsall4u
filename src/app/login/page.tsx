@@ -164,7 +164,7 @@ export default function LoginPage() {
         rel="noopener noreferrer"
         className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-800 hover:underline"
       >
-        Aceder ao ItsTrello
+        Aceder ao ITS4WORK
         <span className="ml-1">→</span>
       </a>
       </div>

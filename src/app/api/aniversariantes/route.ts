@@ -9,14 +9,24 @@ export async function GET() {
     const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
-    // Puxa todos os colaboradores ativos com a sua data de nascimento
+    // A foto e opcional: a lista de aniversarios nao pode deixar de carregar
+    // caso a coluna ainda nao exista no schema do Supabase.
     const { data: colaboradores, error } = await supabase
       .from('colaboradores')
-      .select('id_colaborador, nome, data_nascimento')
+      .select('id_colaborador, nome, data_nascimento, foto_url')
       .eq('estado', 'ACTIVO');
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      const { data: colaboradoresSemFoto, error: erroFallback } = await supabase
+        .from('colaboradores')
+        .select('id_colaborador, nome, data_nascimento')
+        .eq('estado', 'ACTIVO');
+
+      if (erroFallback) {
+        return NextResponse.json({ error: erroFallback.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ aniversariantes: colaboradoresSemFoto || [] }, { status: 200 });
     }
 
     return NextResponse.json({ aniversariantes: colaboradores || [] }, { status: 200 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
 import { cookies } from "next/headers";
+import { criarNotificacoes } from "../../../../lib/supabase/notificacoes";
 
 
 
@@ -62,6 +63,18 @@ export async function  POST(request:Request) {
             {status:500}
         )
        }
+
+    const { data: colaboradores } = await supabase
+     .from("usuarios")
+     .select("id_usuario")
+     .eq("role", "colaborador");
+
+    await criarNotificacoes(
+     supabase,
+     (colaboradores || []).map((colaborador) => colaborador.id_usuario),
+     "Novo comunicado",
+     `Foi publicado um novo comunicado: ${titulo}`,
+    );
 
        return NextResponse.json(
         {
@@ -175,6 +188,18 @@ export async function  POST(request:Request) {
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        const { data: colaboradores } = await supabase
+            .from("usuarios")
+            .select("id_usuario")
+            .eq("role", "colaborador");
+
+        await criarNotificacoes(
+            supabase,
+            (colaboradores || []).map((colaborador) => colaborador.id_usuario),
+            "Comunicado atualizado",
+            `O comunicado "${titulo}" recebeu uma nova atualização.`,
+        );
 
         return NextResponse.json(
             { message: "Comunicado atualizado com sucesso", comunicado },

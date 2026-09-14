@@ -152,8 +152,10 @@ export default function AniversariantesCard() {
                   <Image
                     src={pessoa.foto_url}
                     alt={pessoa.nome}
+                    width={50}
+                    height={50}
                     className="
-                      h-16 w-16
+                      h-20 w-20
                       rounded-full
                       object-cover
                     "
@@ -161,7 +163,7 @@ export default function AniversariantesCard() {
                 ) : (
                   <div
                     className="
-                      flex h-16 w-16
+                      flex h-20 w-20
                       items-center justify-center
                       rounded-full
                       border border-blue-700/30

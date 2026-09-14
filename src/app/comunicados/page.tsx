@@ -7,7 +7,7 @@ import { createClient } from "../../../lib/supabase/client";
 
 
 type Comunicado = {
-   id_comunicados: number;
+  id_comunicados: string;
   titulo: string;
   descricao: string;
   local: string;
@@ -44,6 +44,28 @@ const [autorizado , setAutorizado] =useState(false)
   useEffect(() => {
     fetchComunicados();
   }, []);
+
+  useEffect(() => {
+    async function registrarVisualizacoes() {
+      if (!autorizado || comunicados.length === 0) return;
+
+      await Promise.all(
+        comunicados.map(async (comunicado) => {
+          try {
+            await fetch("/api/visualizacoes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id_comunicado: comunicado.id_comunicados }),
+            });
+          } catch (error) {
+            console.error("Erro ao registar visualização:", error);
+          }
+        })
+      );
+    }
+
+    void registrarVisualizacoes();
+  }, [autorizado, comunicados]);
 
 
   

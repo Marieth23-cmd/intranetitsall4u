@@ -1,6 +1,7 @@
 import { createClient } from "../../../../lib/supabase/server";
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { criarNotificacoes } from '../../../../lib/supabase/notificacoes';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,12 @@ export async function PATCH(request: Request) {
   const body = await request.json();
   const { id_ferias, novo_estado } = body; // novo_estado deve ser 'aprovado' ou 'reprovado'
 
+  const { data: pedidoOriginal } = await supabase
+    .from('ferias')
+    .select('colaboradores(usuario_id, nome)')
+    .eq('id_ferias', id_ferias)
+    .single();
+
   const { data: atualizado, error } = await supabase
     .from('ferias')
     .update({
@@ -56,6 +63,20 @@ export async function PATCH(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  const colaborador = Array.isArray(pedidoOriginal?.colaboradores)
+    ? pedidoOriginal.colaboradores[0]
+    : pedidoOriginal?.colaboradores;
+
+  if (colaborador?.usuario_id) {
+    const estadoFormatado = novo_estado === 'aprovado' ? 'aprovado' : 'rejeitado';
+    await criarNotificacoes(
+      supabase,
+      [colaborador.usuario_id],
+      `Pedido de férias ${estadoFormatado}`,
+      `O seu pedido de férias foi ${estadoFormatado}.`,
+    );
   }
 
   return NextResponse.json({ message: 'Pedido atualizado!', pedido: atualizado }, { status: 200 });
@@ -118,6 +139,18 @@ export async function POST(request: Request) {
       console.error("❌ ERRO DO POSTGRESQL NO INSERT DE FÉRIAS:", insertError.message);
       return NextResponse.json({ error: `Erro no banco de dados: ${insertError.message}` }, { status: 400 });
     }
+
+    const { data: administradores } = await supabase
+      .from('usuarios')
+      .select('id_usuario')
+      .eq('role', 'admin');
+
+    await criarNotificacoes(
+      supabase,
+      (administradores || []).map((administrador) => administrador.id_usuario),
+      'Novo pedido de férias',
+      'Existe um novo pedido de férias aguardando decisão.',
+    );
 
     return NextResponse.json({ message: 'Pedido enviado com sucesso!', pedido: novoPedido }, { status: 200 });
 
