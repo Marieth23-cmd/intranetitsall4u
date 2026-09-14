@@ -345,7 +345,7 @@ async function fetchComunicados() {
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
-                    {comunicado.local}
+                    {comunicado.local} 
                   </p>
 
                 </div>
