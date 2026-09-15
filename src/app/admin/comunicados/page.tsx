@@ -24,7 +24,7 @@ type VisualizacaoLeitor = {
   colaboradores: {
     nome: string;
     cargo: string | null;
-  }[] | null;
+  } | null;
 };
 
 
@@ -55,22 +55,31 @@ export default function ComunicadosAdminPage() {
 // 1. Estados e Tipagem explícita para evitar o erro do "any"
 const [leitores, setLeitores] = useState<VisualizacaoLeitor[]>([]);
 const [modalLeitoresAberto, setModalLeitoresAberto] = useState(false);
+const [carregandoLeitores, setCarregandoLeitores] = useState(false);
+const [comunicadoVisualizado, setComunicadoVisualizado] = useState("");
 
-async function verQuemViu(id_comunicado: string) {
+async function verQuemViu(comunicado: Comunicado) {
+  setComunicadoVisualizado(comunicado.titulo);
+  setLeitores([]);
+  setModalLeitoresAberto(true);
+  setCarregandoLeitores(true);
+
   try {
-    const resposta = await fetch(`/api/visualizacoes?id_comunicado=${encodeURIComponent(id_comunicado)}`, {
+    const resposta = await fetch(`/api/visualizacoes?id_comunicado=${encodeURIComponent(comunicado.id_comunicados)}`, {
       cache: "no-store",
     });
     const dados = await resposta.json();
 
     if (resposta.ok) {
       setLeitores(dados.leitores || []);
-      setModalLeitoresAberto(true);
     } else {
       toast.error(dados.error || "Não foi possível carregar os leitores.");
     }
   } catch (error) {
     console.error("Erro ao buscar leitores:", error);
+    toast.error("Não foi possível carregar os leitores.");
+  } finally {
+    setCarregandoLeitores(false);
   }
 }
 
@@ -317,9 +326,9 @@ async function eliminarComunicado(idComunicado: string) {
           {/* Ações */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => void verQuemViu(comunicado.id_comunicados)}
+              onClick={() => void verQuemViu(comunicado)}
               className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
-              title="Visualizar"
+              title="Ver leitores"
               aria-label={`Ver quem leu ${comunicado.titulo}`}
             >
               <FiEye size={18} />
@@ -494,20 +503,25 @@ async function eliminarComunicado(idComunicado: string) {
   </div>
 )}
 
-
-{/* MODAL DE CONFIRMADOS DE LEITURA */}
+{/* MODAL DE CONFIRMADOS DE LEITURA CORRIGIDO */}
 {modalLeitoresAberto && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
     <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
       <h2 className="text-lg font-semibold text-gray-900">Lido por</h2>
+      <p className="mt-1 truncate text-sm font-medium text-gray-700" title={comunicadoVisualizado}>
+        {comunicadoVisualizado}
+      </p>
       <p className="text-xs text-gray-500 mt-1">Colaboradores que abriram este comunicado.</p>
 
       <div className="mt-4 max-h-60 overflow-y-auto space-y-3 pr-1">
-        {leitores.length === 0 ? (
+        {carregandoLeitores ? (
+          <p className="py-4 text-center text-sm text-gray-400">A carregar leitores...</p>
+        ) : leitores.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-4">Nenhum colaborador viu ainda. 👁️</p>
         ) : (
           leitores.map((leitor, index) => {
-            const colaboradorInfo = leitor.colaboradores?.[0];
+            
+            const colaboradorInfo = leitor.colaboradores;
 
             return (
               <div key={index} className="flex items-center justify-between border-b border-gray-50 pb-2 text-sm">
@@ -540,6 +554,7 @@ async function eliminarComunicado(idComunicado: string) {
     </div>
   </div>
 )}
+
 
 
 

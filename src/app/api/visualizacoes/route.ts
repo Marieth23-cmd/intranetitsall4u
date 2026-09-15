@@ -42,10 +42,12 @@ export async function GET(request: Request) {
   return NextResponse.json({ leitores: leitores || [] });
 }
 
+
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const supabase = await createClient(cookieStore); // 🟢 CORRIGIDO: Cookies passados corretamente
+    const supabase = await createClient(cookieStore); 
 
     // 1. Descobre quem é o utilizador logado no servidor
     const { data: { user } } = await supabase.auth.getUser();
@@ -53,27 +55,91 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
+    const { data: perfil } = await supabase
+      .from("usuarios")
+      .select("role")
+      .eq("id_usuario", user.id)
+      .maybeSingle();
+
+    // O admin não deve ser contado como leitor de comunicados.
+    const role = perfil?.role || user.user_metadata?.role;
+    if (role === "admin") {
+      return NextResponse.json({ message: "Admin visualizou (ignorado registo em tabela)" }, { status: 200 });
+    }
+
     // Captura o id do comunicado enviado pelo front-end
     const body = await request.json();
-    const { id_comunicado } = body; // 🟢 Espera uma string (UUID)
+    const { id_comunicado } = body; 
 
     if (!id_comunicado) {
       return NextResponse.json({ error: "O id do comunicado é obrigatório" }, { status: 400 });
     }
 
-    // 2. Busca o id_colaborador da tabela colaboradores usando o id do Auth
-    const { data: colab, error: colabError } = await supabase
+    // O perfil pode faltar em contas antigas criadas diretamente no Auth.
+    let colab;
+    const { data: colabInicial, error: colabError } = await supabase
       .from("colaboradores")
       .select("id_colaborador")
       .eq("usuario_id", user.id)
       .maybeSingle();
 
-    if (colabError || !colab) {
-      console.error("Perfil de colaborador não encontrado:", colabError);
-      return NextResponse.json({ error: "Perfil de colaborador não encontrado" }, { status: 422 });
+    colab = colabInicial;
+
+    if (colabError) {
+      console.error("Erro ao buscar perfil de colaborador:", colabError);
+      return NextResponse.json({ error: colabError.message }, { status: 500 });
     }
 
-    // 3. Insere o registo de leitura (se já existir, o conflito ignora)
+    if (!colab) {
+      const { data: novoColaborador, error: criarColaboradorError } = await supabase
+        .from("colaboradores")
+        .insert({
+          usuario_id: user.id,
+          nome: user.user_metadata?.nome || user.email || "Colaborador",
+          estado: "ACTIVO",
+        })
+        .select("id_colaborador")
+        .single();
+
+      if (criarColaboradorError) {
+        if (criarColaboradorError.code === "23505") {
+          const { data: colaboradorExistente, error: buscarColaboradorError } = await supabase
+            .from("colaboradores")
+            .select("id_colaborador")
+            .eq("usuario_id", user.id)
+            .single();
+
+          if (!buscarColaboradorError && colaboradorExistente) {
+            colab = colaboradorExistente;
+          } else {
+            console.error("Erro ao recuperar perfil de colaborador após conflito:", buscarColaboradorError);
+            return NextResponse.json(
+              { error: "Perfil de colaborador não encontrado no sistema" },
+              { status: 422 }
+            );
+          }
+        } else {
+          console.error("Erro ao criar perfil de colaborador:", criarColaboradorError);
+          return NextResponse.json(
+            { error: `Perfil de colaborador não encontrado: ${criarColaboradorError.message}` },
+            { status: 422 }
+          );
+        }
+      }
+
+      if (novoColaborador) {
+        colab = novoColaborador;
+      }
+    }
+
+    if (!colab) {
+      return NextResponse.json(
+        { error: "Perfil de colaborador não encontrado no sistema" },
+        { status: 422 }
+      );
+    }
+
+    // 3. Insere o registo de leitura do colaborador real
     const { error: upsertError } = await supabase
       .from("visualizacoes_comunicados")
       .upsert({

@@ -106,7 +106,7 @@ export default function AniversariantesCard() {
           Aniversariantes
         </h2>
 
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-gray-700">
           Próximos aniversários na empresa
         </p>
       </div>
@@ -155,7 +155,8 @@ export default function AniversariantesCard() {
                     width={50}
                     height={50}
                     className="
-                      h-20 w-20
+                      h-16 w-16
+                      md:h-20 md:w-20
                       rounded-full
                       object-cover
                     "
@@ -163,7 +164,8 @@ export default function AniversariantesCard() {
                 ) : (
                   <div
                     className="
-                      flex h-20 w-20
+                      flex  h-16 w-16
+                      md:h-20 md:w-20
                       items-center justify-center
                       rounded-full
                       border border-blue-700/30

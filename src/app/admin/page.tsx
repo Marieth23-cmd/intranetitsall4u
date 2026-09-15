@@ -336,17 +336,19 @@ async function fetchComunicados() {
                   <h3 className="text-sm font-medium text-gray-700">
                     {comunicado.titulo }
                   </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 mt-1">
                   {limitarTexto(comunicado.descricao, 50)}
                 </p>
 
+                  <div className="flex gap-1 mt-2 ">
                   <p className="mt-1 text-xs text-gray-700">
-                    {dataFormatada}
+                    {dataFormatada} .
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
                     {comunicado.local} 
                   </p>
+                  </div>
 
                 </div>
 

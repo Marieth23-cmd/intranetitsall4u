@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {useRouter} from "next/navigation"
 import { createClient } from "../../../lib/supabase/client";
 
@@ -24,6 +24,7 @@ const [loading, setLoading] = useState(true);
 const [autorizado , setAutorizado] =useState(false)
  const [verificandoAcesso, setVerificandoAcesso] = useState(true)
  const router = useRouter()
+const visualizacoesRegistadas = useRef(new Set<string>());
 
 
  const fetchComunicados = async () => {
@@ -51,13 +52,23 @@ const [autorizado , setAutorizado] =useState(false)
 
       await Promise.all(
         comunicados.map(async (comunicado) => {
+          if (visualizacoesRegistadas.current.has(comunicado.id_comunicados)) return;
+          visualizacoesRegistadas.current.add(comunicado.id_comunicados);
+
           try {
-            await fetch("/api/visualizacoes", {
+            const resposta = await fetch("/api/visualizacoes", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ id_comunicado: comunicado.id_comunicados }),
             });
+
+            if (!resposta.ok) {
+              visualizacoesRegistadas.current.delete(comunicado.id_comunicados);
+              const dados = await resposta.json().catch(() => ({}));
+              console.error("Erro ao registar visualização:", dados.error || resposta.statusText);
+            }
           } catch (error) {
+            visualizacoesRegistadas.current.delete(comunicado.id_comunicados);
             console.error("Erro ao registar visualização:", error);
           }
         })
