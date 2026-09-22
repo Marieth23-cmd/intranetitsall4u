@@ -7,6 +7,31 @@ export const dynamic = 'force-dynamic';
 
 const departamentosPermitidos = ['Audiovisual', 'Informática /Ti', 'Area Administrativa'] as const;
 
+function dataHojeLocal() {
+  const hoje = new Date();
+  return [
+    hoje.getFullYear(),
+    String(hoje.getMonth() + 1).padStart(2, '0'),
+    String(hoje.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function dataValida(data: unknown) {
+  if (typeof data !== 'string') return false;
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+  if (!partes) return false;
+
+  const dataConvertida = new Date(Date.UTC(
+    Number(partes[1]),
+    Number(partes[2]) - 1,
+    Number(partes[3]),
+  ));
+
+  return dataConvertida.getUTCFullYear() === Number(partes[1])
+    && dataConvertida.getUTCMonth() === Number(partes[2]) - 1
+    && dataConvertida.getUTCDate() === Number(partes[3]);
+}
+
 // Inicializa o cliente mestre para criar usuários no Auth
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,6 +78,27 @@ export async function POST(request: Request) {
 
   if (!departamentosPermitidos.includes(departamento)) {
     return NextResponse.json({ error: 'Selecione um departamento válido' }, { status: 400 });
+  }
+
+  if (data_nascimento && !dataValida(data_nascimento)) {
+    return NextResponse.json({ error: 'A data de nascimento é inválida' }, { status: 400 });
+  }
+
+  if (data_entrada && !dataValida(data_entrada)) {
+    return NextResponse.json({ error: 'A data de entrada é inválida' }, { status: 400 });
+  }
+
+  const hoje = dataHojeLocal();
+  if (data_nascimento > hoje) {
+    return NextResponse.json({ error: 'A data de nascimento não pode ser futura' }, { status: 400 });
+  }
+
+  if (data_entrada > hoje) {
+    return NextResponse.json({ error: 'A data de entrada não pode ser futura' }, { status: 400 });
+  }
+
+  if (data_nascimento && data_entrada && data_entrada < data_nascimento) {
+    return NextResponse.json({ error: 'A data de entrada não pode ser anterior à data de nascimento' }, { status: 400 });
   }
 
   try {

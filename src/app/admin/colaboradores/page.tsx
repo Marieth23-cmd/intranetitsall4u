@@ -22,6 +22,29 @@ type colaborador ={
 
   const departamentos = ["Audiovisual", "Informática /Ti", "Area Administrativa"] as const;
 
+  function dataHojeLocal() {
+    const hoje = new Date();
+    return [
+      hoje.getFullYear(),
+      String(hoje.getMonth() + 1).padStart(2, "0"),
+      String(hoje.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function validarDatas(dataNascimento: string, dataEntrada: string) {
+    const hoje = dataHojeLocal();
+    if (dataNascimento && dataNascimento > hoje) {
+      return "A data de nascimento não pode ser futura.";
+    }
+    if (dataEntrada && dataEntrada > hoje) {
+      return "A data de entrada não pode ser futura.";
+    }
+    if (dataNascimento && dataEntrada && dataEntrada < dataNascimento) {
+      return "A data de entrada não pode ser anterior à data de nascimento.";
+    }
+    return null;
+  }
+
 
 export default function ColaboradoresAdminPage() {
 
@@ -119,6 +142,12 @@ export default function ColaboradoresAdminPage() {
 
   async function cadastrarColaborador(e: React.FormEvent) {
     e.preventDefault();
+
+    const erroDatas = validarDatas(form.data_nascimento, form.data_entrada);
+    if (erroDatas) {
+      toast.error(erroDatas);
+      return;
+    }
 
     try {
       setSalvando(true);
@@ -225,6 +254,16 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
   // Função disparada no submit do formulário de edição
   async function salvarEdicaoColaborador(e: React.FormEvent) {
     e.preventDefault();
+
+    const erroDatas = validarDatas(
+      colaboradorSelecionado.data_nascimento,
+      colaboradorSelecionado.data_entrada,
+    );
+    if (erroDatas) {
+      toast.error(erroDatas);
+      return;
+    }
+
     try {
       setSalvando(true);
       const supabase = createClient();
@@ -542,6 +581,7 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
             <input
               type="date"
               lang="pt-PT"
+              max={dataHojeLocal()}
               value={form.data_nascimento}
               onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })}
               className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
@@ -553,6 +593,7 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
             <input
               type="date"
               lang="pt-PT"
+              max={dataHojeLocal()}
               value={form.data_entrada}
               onChange={(e) => setForm({ ...form, data_entrada: e.target.value })}
               className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
@@ -646,6 +687,7 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
             <input
               required
               type="date"
+              max={dataHojeLocal()}
               value={colaboradorSelecionado.data_nascimento}
               onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, data_nascimento: e.target.value })}
               className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
@@ -657,6 +699,7 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
             <input
               required
               type="date"
+              max={dataHojeLocal()}
               value={colaboradorSelecionado.data_entrada}
               onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, data_entrada: e.target.value })}
               className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm bg-white focus:border-blue-600 focus:outline-none"
