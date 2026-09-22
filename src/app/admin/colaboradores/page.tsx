@@ -10,7 +10,7 @@ type colaborador ={
   id_colaborador: string;
   nome:string;
   cargo: string | null;
-  departamento: string | null ;
+    departamento: string | null;
   foto_url: string |null;
   estado: "ACTIVO" | "DESACTIVADO";
   data_nascimento : string;
@@ -19,6 +19,8 @@ type colaborador ={
     email: string
   } |null
 }
+
+  const departamentos = ["Audiovisual", "Informática /Ti", "Area Administrativa"] as const;
 
 
 export default function ColaboradoresAdminPage() {
@@ -29,12 +31,14 @@ export default function ColaboradoresAdminPage() {
  const [salvando , setSalvando]= useState(false)
   const [autorizado, setAutorizado] = useState(false);
   const [verificandoAcesso, setVerificandoAcesso] = useState(true)
+  const [role, setRole] = useState<"admin" | "gestor" | null>(null);
   const router = useRouter()
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState({
     id_colaborador: "",
     nome: "",
     cargo: "",
+    departamento: "",
     data_nascimento: "",
     data_entrada: ""
   });
@@ -47,9 +51,17 @@ export default function ColaboradoresAdminPage() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+              .from("usuarios")
+              .select("role")
+              .eq("id_usuario", user.id)
+              .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
-        if (role === "admin") {
+        if (role === "admin" || role === "gestor") {
+          setRole(role);
           setAutorizado(true);
         } else {
           router.replace("/");
@@ -76,7 +88,8 @@ export default function ColaboradoresAdminPage() {
   senha:"",
   foto_url:"",
    cargo: "",          
-    data_nascimento: "",
+  departamento: "",
+  data_nascimento: "",
     data_entrada: ""    
  })
 
@@ -129,6 +142,7 @@ export default function ColaboradoresAdminPage() {
           senha: "",
           role: "colaborador",
           cargo: "",
+          departamento: "",
           foto_url:"",
           data_nascimento: "",
           data_entrada: ""
@@ -152,11 +166,27 @@ export default function ColaboradoresAdminPage() {
  if(carregando)return 
 
 
-async function eliminarColaborador(id_colaborador: string) {
-  // Cria uma caixa de confirmação nativa do navegador
-  const confirmar = window.confirm("Tem a certeza que deseja desactivar colaborador?");
-  if (!confirmar) return;
 
+
+ 
+
+async function eliminarColaborador(id_colaborador: string) {
+  toast("Tem a certeza que deseja eliminar este colaborador?", {
+    duration: 5000,
+    action: {
+      label: "Confirmar",
+      onClick: () => {
+        void confirmarEliminacaoColaborador(id_colaborador);
+      },
+    },
+    cancel: {
+      label: "Cancelar",
+      onClick: () => {},
+    },
+  });
+}
+
+async function confirmarEliminacaoColaborador(id_colaborador: string) {
   try {
     const supabase = createClient();
 
@@ -185,6 +215,7 @@ async function eliminarColaborador(id_colaborador: string) {
       id_colaborador: colaborador.id_colaborador,
       nome: colaborador.nome || "",
       cargo: colaborador.cargo || "",      // Formata a data para o input HTML do tipo date reconhecer (AAAA-MM-DD)
+      departamento: colaborador.departamento || "",
       data_nascimento: colaborador.data_nascimento ? colaborador.data_nascimento.substring(0, 10) : "",
       data_entrada: colaborador.data_entrada ? colaborador.data_entrada.substring(0, 10) : ""
     });
@@ -203,6 +234,7 @@ async function eliminarColaborador(id_colaborador: string) {
         .update({
           nome: colaboradorSelecionado.nome,
           cargo: colaboradorSelecionado.cargo || null,
+          departamento: colaboradorSelecionado.departamento || null,
           data_nascimento: colaboradorSelecionado.data_nascimento || null,
           data_entrada: colaboradorSelecionado.data_entrada || null
         })
@@ -246,14 +278,14 @@ async function eliminarColaborador(id_colaborador: string) {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800 sm:text-3xl">
+          <h1 className="page-title">
             Gestão de colaboradores
           </h1>
 
           
         </div>
 
-        <button
+        {(role === "admin" || role === "gestor") && <button
         onClick={()=> setmodalAberto(true)}
           type="button"
           className="
@@ -267,7 +299,7 @@ async function eliminarColaborador(id_colaborador: string) {
         >
           <FiPlus size={18} />
           Adicionar colaborador
-        </button>
+        </button>}
 
       </header>
 
@@ -360,7 +392,7 @@ async function eliminarColaborador(id_colaborador: string) {
         <FiEdit2 size={16} />
       </button>
 
-      <button
+      {(role === "admin" || role === "gestor") && <button
         onClick={() => eliminarColaborador(colaborador.id_colaborador)}
         type="button"
         title="Desativar colaborador"
@@ -373,7 +405,8 @@ async function eliminarColaborador(id_colaborador: string) {
         "
       >
         <FiTrash2 size={16} />
-      </button>
+      </button>}
+
 
     </div>
 
@@ -420,12 +453,15 @@ async function eliminarColaborador(id_colaborador: string) {
 
 {/* MODAL DE CADASTRO (Aparece apenas se modalAberto for true) */}
 {modalAberto && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+  <div
+    onMouseDown={(event) => event.target === event.currentTarget && setmodalAberto(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+  >
     <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
       
       {/* Título do Modal */}
-      <h2 className="text-xl font-semibold text-gray-800">Cadastrar Novo Colaborador</h2>
-      <p className="mt-1 text-xs text-gray-500">Insira as credenciais de acesso e dados do perfil institucional.</p>
+      <h2 className="section-title">Cadastrar Novo Colaborador</h2>
+      <p className="content-description mt-1">Insira as credenciais de acesso e dados do perfil institucional.</p>
 
       {/* Formulário */}
       <form onSubmit={cadastrarColaborador} className="mt-4 space-y-4">
@@ -483,7 +519,20 @@ async function eliminarColaborador(id_colaborador: string) {
             />
           </div>
 
-          
+          <div>
+            <label className="block text-xs font-medium text-gray-600">Departamento</label>
+            <select
+              required
+              value={form.departamento}
+              onChange={(e) => setForm({ ...form, departamento: e.target.value })}
+              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            >
+              <option value="" disabled>Selecione um departamento</option>
+              {departamentos.map((departamento) => (
+                <option key={departamento} value={departamento}>{departamento}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* 🟢 NOVOS CAMPOS: Datas de Nascimento e Entrada */}
@@ -541,11 +590,14 @@ async function eliminarColaborador(id_colaborador: string) {
 
 {/* MODAL DE EDIÇÃO */}
 {modalEditarAberto && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+  <div
+    onMouseDown={(event) => event.target === event.currentTarget && setModalEditarAberto(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+  >
     <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
       
-      <h2 className="text-xl font-semibold text-gray-800">Editar Perfil do Colaborador</h2>
-      <p className="mt-1 text-xs text-gray-500">Altere os dados institucionais ou do perfil do funcionário.</p>
+      <h2 className="section-title">Editar Perfil do Colaborador</h2>
+      <p className="content-description mt-1">Altere os dados institucionais ou do perfil do funcionário.</p>
 
       <form onSubmit={salvarEdicaoColaborador} className="mt-4 space-y-4">
         
@@ -564,6 +616,7 @@ async function eliminarColaborador(id_colaborador: string) {
           <div>
             <label className="block text-xs font-medium text-gray-600">Cargo / Função</label>
             <input
+              required
               type="text"
               value={colaboradorSelecionado.cargo}
               onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, cargo: e.target.value })}
@@ -571,13 +624,27 @@ async function eliminarColaborador(id_colaborador: string) {
             />
           </div>
 
-         
+          <div>
+            <label className="block text-xs font-medium text-gray-600">Departamento</label>
+            <select
+              required
+              value={colaboradorSelecionado.departamento}
+              onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, departamento: e.target.value })}
+              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
+            >
+              <option value="" disabled>Selecione um departamento</option>
+              {departamentos.map((departamento) => (
+                <option key={departamento} value={departamento}>{departamento}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-gray-600">Data de Nascimento</label>
             <input
+              required
               type="date"
               value={colaboradorSelecionado.data_nascimento}
               onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, data_nascimento: e.target.value })}
@@ -588,6 +655,7 @@ async function eliminarColaborador(id_colaborador: string) {
           <div>
             <label className="block text-xs font-medium text-gray-600">Data de Entrada / Admissão</label>
             <input
+              required
               type="date"
               value={colaboradorSelecionado.data_entrada}
               onChange={(e) => setColaboradorSelecionado({ ...colaboradorSelecionado, data_entrada: e.target.value })}

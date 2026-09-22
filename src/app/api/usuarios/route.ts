@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const departamentosPermitidos = ['Audiovisual', 'Informática /Ti', 'Area Administrativa'] as const;
+
 // Inicializa o cliente mestre para criar usuários no Auth
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +18,7 @@ export async function POST(request: Request) {
   const cookieStore = await cookies();
   const supabaseComum = await createClient(cookieStore);
 
-  // 1. PROTEÇÃO DE ROTA - VERIFICA SE QUEM ESTÁ OPERANDO É ADMIN
+  // 1. Protege a área de colaboradores para administradores e gestores.
   const { data: { user } } = await supabaseComum.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
@@ -26,8 +28,8 @@ export async function POST(request: Request) {
     .eq('id_usuario', user.id)
     .single();
 
-  if (perfilAdmin?.role !== 'admin') {
-    return NextResponse.json({ error: 'Acesso restrito para administradores' }, { status: 403 });
+  if (perfilAdmin?.role !== 'admin' && perfilAdmin?.role !== 'gestor') {
+    return NextResponse.json({ error: 'Acesso restrito para administradores e gestores' }, { status: 403 });
   }
 
   // 2. CAPTURA DOS DADOS COMPLETOS DO FORMULÁRIO
@@ -38,11 +40,20 @@ export async function POST(request: Request) {
     nome, 
     role,
     cargo,          
+    departamento,
     data_nascimento,
     data_entrada    
   } = body;
   
   const roleFormatada = (role || 'colaborador').toLowerCase();
+
+  if (perfilAdmin.role === 'gestor' && roleFormatada !== 'colaborador') {
+    return NextResponse.json({ error: 'Gestores só podem criar colaboradores' }, { status: 403 });
+  }
+
+  if (!departamentosPermitidos.includes(departamento)) {
+    return NextResponse.json({ error: 'Selecione um departamento válido' }, { status: 400 });
+  }
 
   try {
     // 3. PASSO 1: Criar o usuário no Autenticador do Supabase (Guarda os metadados base)
@@ -77,8 +88,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Erro no perfil público: ${userTableError.message}` }, { status: 500 });
     }
 
-    // 5. PASSO 3: Se for colaborador, criar o perfil COMPLETO com todas as colunas
-    if (roleFormatada === 'colaborador') {
+    // 5. PASSO 3: Gestores também são colaboradores para férias, faltas e perfil.
+    if (roleFormatada === 'colaborador' || roleFormatada === 'gestor') {
       const { error: colabTableError } = await supabaseAdmin
         .from('colaboradores')
         .insert([
@@ -86,6 +97,7 @@ export async function POST(request: Request) {
             usuario_id: novoUserId,
             nome: nome || 'Novo Funcionário',
             cargo: cargo || null,                     
+            departamento,
             data_nascimento: data_nascimento || null, 
             data_entrada: data_entrada || null,       
             estado: 'ACTIVO' 
@@ -115,12 +127,23 @@ export async function GET() {
   const { data: { user } } = await supabaseComum.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
+  const { data: perfil } = await supabaseComum
+    .from('usuarios')
+    .select('role')
+    .eq('id_usuario', user.id)
+    .single();
+
+  if (perfil?.role !== 'admin' && perfil?.role !== 'gestor') {
+    return NextResponse.json({ error: 'Acesso restrito' }, { status: 403 });
+  }
+
   const { data: colaboradores, error } = await supabaseComum
     .from('colaboradores')
     .select(`
       id_colaborador,
       nome,
       cargo,
+      departamento,
       estado,
       data_nascimento,
       usuarios ( email )

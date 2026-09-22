@@ -102,7 +102,7 @@ export default function AniversariantesCard() {
 
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="section-title">
           Aniversariantes
         </h2>
 

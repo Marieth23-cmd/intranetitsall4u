@@ -1,6 +1,7 @@
 "use client";
 import {useState, useEffect} from "react";
 import { FiPlus,FiEdit2, FiSearch} from "react-icons/fi";
+import { createClient } from "../../../../lib/supabase/client";
 
 type clientes = {
   id_cliente: number;
@@ -34,6 +35,7 @@ function EstadoCliente({ estado }: { estado: string }) {
 export default function ClientesAdminPage() {
  const [clientes, setClientes] = useState<clientes[]>([]);
  const [loading, setLoading] = useState(true);
+ const [role, setRole] = useState<"admin" | "gestor" | null>(null);
  const [error, setError] = useState<string | null>(null);
  const [modalAberto, setModalAberto] = useState(false);
   const [clienteEditando, setClienteEditando] = useState<clientes | null>(null);
@@ -72,6 +74,26 @@ export default function ClientesAdminPage() {
 
 useEffect(() => {
   fetchClientes();
+}, []);
+
+useEffect(() => {
+  async function carregarRole() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: perfil } = user
+      ? await supabase
+          .from("usuarios")
+          .select("role")
+          .eq("id_usuario", user.id)
+          .maybeSingle()
+      : { data: null };
+    const roleAtual = perfil?.role;
+    if (roleAtual === "admin" || roleAtual === "gestor") {
+      setRole(roleAtual);
+    }
+  }
+
+  void carregarRole();
 }, []);
 
 const clientesFiltrados = clientes.filter((cliente) => {
@@ -162,8 +184,6 @@ const handleEditar = async (event: React.FormEvent<HTMLFormElement>) => {
 
 
 
-
-
 if(loading){
   return (
     <div className="flex items-center justify-center h-screen"> carregando...</div>
@@ -178,14 +198,14 @@ if(loading){
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800 sm:text-3xl">
+          <h1 className="page-title">
             Gestão de clientes
           </h1>
 
         
         </div>
 
-        <button
+        {(role === "admin" || role === "gestor") && <button
         onClick={()=>setModalAberto(true)}
           type="button"
           className="
@@ -199,7 +219,7 @@ if(loading){
         >
           <FiPlus size={18} />
           Novo cliente
-        </button>
+        </button>}
 
       </header>
 
@@ -230,7 +250,7 @@ if(loading){
             {/* Nome + estado */}
             <div className="flex items-start justify-between gap-3">
 
-              <h2 className="text-base font-semibold text-gray-800">
+              <h2 className="section-title">
                 {cliente.nome}
               </h2>
 
@@ -266,7 +286,7 @@ if(loading){
             {/* Ação */}
             <div className="mt-4 border-t border-gray-100 pt-4">
 
-              <button
+              {(role === "admin" || role === "gestor") && <button
                 type="button"
                 onClick={() => abrirEdicao(cliente)}
                 className="
@@ -280,7 +300,7 @@ if(loading){
               >
                 <FiEdit2 size={16} />
                 Editar cliente
-              </button>
+              </button>}
 
             </div>
 
@@ -358,7 +378,7 @@ if(loading){
 
                   <div className="flex justify-end">
 
-                    <button
+                    {(role === "admin" || role === "gestor") && <button
                       type="button"
                       onClick={() => abrirEdicao(cliente)}
                       title="Editar cliente"
@@ -370,7 +390,7 @@ if(loading){
                       "
                     >
                       <FiEdit2 size={17} />
-                    </button>
+                    </button>}
 
                   </div>
 
@@ -387,9 +407,12 @@ if(loading){
       </div>
 
       {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div
+          onMouseDown={(event) => event.target === event.currentTarget && setModalAberto(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        >
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <h2 className="text-xl font-semibold text-gray-800">Cadastrar Novo Cliente</h2>
+            <h2 className="section-title">Cadastrar Novo Cliente</h2>
 
             <form 
             className="mt-4 space-y-4"
@@ -466,9 +489,12 @@ if(loading){
       )}
 
       {clienteEditando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div
+          onMouseDown={(event) => event.target === event.currentTarget && setClienteEditando(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        >
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-gray-800">Editar cliente</h2>
+            <h2 className="section-title">Editar cliente</h2>
 
             <form className="mt-4 space-y-4" onSubmit={handleEditar}>
               <div>

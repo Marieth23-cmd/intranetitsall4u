@@ -6,6 +6,9 @@ import {useRouter} from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../../lib/supabase/client";
 import AniversariantesCard from "../Components/AniversariantesCard";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+
 
 const heroSlides = [
   {
@@ -25,15 +28,19 @@ const heroSlides = [
   },
 ];
 
-
-
+// 🟢 SUBSTITUA O SEU TIPO NO TOPO DO ARQUIVO POR ESTE:
 type ComunicadoHome = {
-  id_comunicados: number;
+  id_comunicados: string; // 🟢 Corrigido para string para aceitar o UUID e o "banner"
   titulo: string;
   descricao: string;
-  local: string;
+  local: string | null;
   data_publicacao: string;
+  publicado?: boolean;
+  usuarios: {
+    email: string;
+  } | null; // 🟢 Adicionado para resolver o erro da linha 439
 };
+
 
 export const dynamic = 'force-dynamic';
 
@@ -43,19 +50,26 @@ export default function Home() {
   const [autorizado, setAutorizado] = useState(false);
   const [comunicados, setComunicados] = useState<ComunicadoHome[]>([]);
   const [primeiroNome , setPrimeiroNome] = useState("Admin")
+   const [modalLeituraAberto, setModalLeituraAberto] = useState(false);
+  const [comunicadoParaLer, setComunicadoParaLer] = useState<ComunicadoHome | null>(null);
+
   const router = useRouter()
 
 
   const [contadores , setContadores]=useState(
     {
       colaboradores:0,
-      documentos:0,
       clientes:0,
       projetos:0
     }
   )
 
 
+ function abrirLeitorComunicado(comunicado: ComunicadoHome) {
+    setComunicadoParaLer(comunicado);
+    setModalLeituraAberto(true);
+  
+  }
 
   useEffect(() => {
     async function verificarAcessoAdmin() {
@@ -63,7 +77,14 @@ export default function Home() {
         setLoading(true);
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+              .from("usuarios")
+              .select("role")
+              .eq("id_usuario", user.id)
+              .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
         if (role === "admin") {
           setAutorizado(true);
@@ -200,73 +221,98 @@ async function fetchComunicados() {
       
       {/* Cabeçalho */}
       <header>
-        <h1 className="text-2xl font-semibold text-black sm:text-3xl">
+        <h1 className="page-title">
           {saudacao}, {primeiroNome}
         </h1>
 
-        <p className="mt-2 text-sm text-gray-500 sm:text-base">
+        <p className="content-description mt-2">
           Bem-vinda à intranet Itsall4u.
         </p>
       </header>
 
 
-      {/* HERO */}
-      <section className="mt-8 overflow-hidden rounded-2xl bg-black shadow-sm">
-        <div className="grid min-h-[320px] grid-cols-1 md:grid-cols-3">
-
-          {/* Texto */}
-          <div className="flex flex-col justify-center p-8 text-white sm:p-10 md:col-span-1 lg:p-12">
-            
-            <span className="mb-4 text-xs font-medium uppercase tracking-widest text-white/70">
-              Comunicação interna
-            </span>
-
-            <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
-              {tituloBanner}
-            </h2>
-
-            <p className="mt-4 text-sm leading-6 text-white/90">
-              {descricaoBanner}
-            </p>
-
-            <span className="mt-6 text-xs text-white/60">
-              Publicado recentemente
-            </span>
-          </div>
+     
 
 
-          {/* Imagem */}
-         <div className="relative min-h-[260px] md:col-span-2 overflow-hidden">
+{/* HERO BANNER COM TAMANHO FIXO COMPACTO */}
+<section className="mt-8 overflow-hidden rounded-2xl bg-black shadow-lg">
+  <div className="grid min-h-[420px] max-h-[420px] grid-cols-1 md:grid-cols-3">
 
-            <Image
-              src={heroSlides[slideAtual].imagem}
-              alt={heroSlides[slideAtual].alt}
-              fill
-              className="object-cover transition-opacity duration-500"
-              sizes="(max-width: 768px) 100vw, 66vw"
-            />
+    {/* Bloco de Texto - Altura controlada com rolagem interna se necessário */}
+    <div className="flex flex-col justify-center p-8 text-white sm:p-10 md:col-span-1 lg:p-12 max-h-[420px] overflow-y-auto">
+      
+      <span className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/60">
+        Comunicação interna
+      </span>
 
-            <div className="absolute inset-0 bg-black/10" />
+      {/* Título: Ocupa no máximo 2 linhas antes de cortar */}
+      <h2 className="text-xl font-bold leading-tight sm:text-2xl line-clamp-2" title={tituloBanner}>
+        {tituloBanner}
+      </h2>
 
-            </div>
+      {/* Descrição: Ocupa no máximo 4 linhas e oculta o resto de forma elegante */}
+      <div className="mt-4 text-xs leading-relaxed text-white/80 line-clamp-4 prose prose-invert">
+        <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+          {descricaoBanner}
+        </ReactMarkdown>
+      </div>
 
-        </div>
-      </section>
+      {descricaoBanner && descricaoBanner.length > 150 && (
+        <button
+          type="button"
+          // Passamos o objeto do comunicado correspondente ao banner se o tiver, ou montamos um dinâmico
+          onClick={() => abrirLeitorComunicado({
+            id_comunicados: "banner",
+            titulo: tituloBanner,
+            descricao: descricaoBanner,
+            local: "Destaque",
+            data_publicacao: new Date().toISOString(),
+            publicado: true,
+            usuarios: null
+          })}
+          className="mt-3 text-left text-xs font-semibold text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
+        >
+          Ler destaque completo →
+        </button>
+      )}
+
+      <span className="mt-6 text-[10px] uppercase font-semibold text-white/40 tracking-wider">
+        Publicado recentemente
+      </span>
+    </div>
+
+    {/* Bloco da Imagem - Mantém a proporção exata fixada pelo Grid */}
+    <div className="relative min-h-[260px] md:col-span-2 md:h-full overflow-hidden">
+      <Image
+        src={heroSlides[slideAtual].imagem}
+        alt={heroSlides[slideAtual].alt}
+        fill
+        className="object-cover transition-opacity duration-500"
+        sizes="(max-width: 768px) 100vw, 66vw"
+        priority // Força o carregamento rápido da primeira imagem do Banner
+      />
+      <div className="absolute inset-0 bg-black/10" />
+    </div>
+
+  </div>
+</section>
 
 
-         {/* SEÇÃO DE ESTATÍSTICAS DINÂMICAS */}
-<section className="mt-6">
-  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
+
+
+{/* SEÇÃO DE ESTATÍSTICAS DINÂMICAS CENTRALIZADAS */}
+<section className="mt-6 mb-4">
+  {/* 🟢 CORRIGIDO: Removido o grid rígido de 4 colunas em telas grandes e adicionado flex/grid flexível centralizado */}
+  <div className="flex flex-wrap items-center justify-center gap-4 sm:grid sm:grid-cols-3 lg:max-w-5xl lg:mx-auto">
 
     {[
       { numero: contadores.colaboradores, titulo: "Colaboradores" },
-      { numero: contadores.documentos, titulo: "Documentos" },
       { numero: contadores.clientes, titulo: "Clientes" },
       { numero: contadores.projetos, titulo: "Projectos Criados" } 
     ].map((estatistica, chave) => (
       <div 
         key={chave} 
-        className="bg-white border border-gray-200 px-3 py-5 shadow-sm rounded-lg text-center"
+        className="bg-white border border-gray-200 px-3 py-5 shadow-sm rounded-lg text-center flex-1 min-w-[140px] sm:w-auto"
       >
         <h1 className="text-xl md:text-2xl font-semibold text-black">
           {estatistica.numero}
@@ -282,6 +328,8 @@ async function fetchComunicados() {
 
 
 
+
+
         
         {/* COMUNICADOS + ANIVERSARIANTES */}
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -292,7 +340,7 @@ async function fetchComunicados() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="section-title">
                 Comunicados recentes
               </h2>
 
@@ -363,6 +411,53 @@ async function fetchComunicados() {
         <AniversariantesCard />
 
       </section>
+
+
+
+
+ {modalLeituraAberto && comunicadoParaLer && (
+    <div
+   onMouseDown={(event) => event.target === event.currentTarget && setModalLeituraAberto(false)}
+     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[85vh] overflow-y-auto">
+        
+        {/* Cabeçalho do Leitor */}
+        <div className="border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {comunicadoParaLer.local || "Geral"}
+            </span>
+            <span className="text-xs text-gray-400">
+              Publicado em {new Date(comunicadoParaLer.data_publicacao).toLocaleDateString("pt-PT")}
+            </span>
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-gray-900 sm:text-2xl">
+            {comunicadoParaLer.titulo}
+          </h2>
+        </div>
+
+        {/* 🌟 CONTEÚDO EM MARKDOWN TOTALMENTE EXPANDIDO E FORMADO */}
+        <div className="mt-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line text-left prose max-w-none border-b border-gray-100 pb-6 min-h-[100px]">
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+            {comunicadoParaLer.descricao}
+          </ReactMarkdown>
+        </div>
+
+        {/* Rodapé do Modal */}
+        <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+          <p>Publicado por: {comunicadoParaLer.usuarios?.email || "Sistema"}</p>
+          <button
+            type="button"
+            onClick={() => setModalLeituraAberto(false)}
+            className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-gray-800 transition cursor-pointer"
+          >
+            Fechar Leitura
+          </button>
+        </div>
+
+      </div>
+    </div>
+  )}
 
 
     </main>

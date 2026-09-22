@@ -168,13 +168,13 @@ export default function DefinicoesAdminPage() {
       
       {/* Cabeçalho */}
       <header>
-        <h1 className="text-2xl font-semibold text-gray-800 sm:text-3xl">Definições</h1>
+        <h1 className="page-title">Definições</h1>
       </header>
 
       {/* SEÇÃO: CONTA PESSOAL DO ADMIN */}
       <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-800">A minha conta pessoal</h2>
+          <h2 className="section-title">A minha conta pessoal</h2>
           <p className="mt-1 text-xs text-gray-500">Gerencie as suas credenciais de acesso ao painel de administração.</p>
         </div>
 
@@ -239,7 +239,7 @@ export default function DefinicoesAdminPage() {
       {/* SEÇÃO: INFORMAÇÕES DA EMPRESA */}
       <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-800">Informações da empresa</h2>
+          <h2 className="section-title">Informações da empresa</h2>
           <p className="mt-1 text-xs text-gray-500">Informações institucionais apresentadas na intranet.</p>
         </div>
 
@@ -323,7 +323,7 @@ export default function DefinicoesAdminPage() {
       {/* SEÇÃO: PREFERÊNCIAS E ENUMS */}
       <section className="mt-5 rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-800">Preferências</h2>
+          <h2 className="section-title">Preferências</h2>
           <p className="mt-1 text-xs text-gray-500">Defina algumas preferências gerais da plataforma.</p>
         </div>
 
@@ -380,7 +380,7 @@ export default function DefinicoesAdminPage() {
               <FiBell size={17} className="text-blue-700" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-800">Notificações</h2>
+              <h2 className="section-title">Notificações</h2>
               <p className="mt-1 text-xs text-gray-500">Controle quais acontecimentos devem gerar notificações.</p>
             </div>
           </div>

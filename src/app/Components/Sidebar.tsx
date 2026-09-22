@@ -14,7 +14,7 @@ import { CiLogout } from "react-icons/ci";
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  role: "admin" | "colaborador";
+  role: "admin" | "gestor" | "colaborador";
 }
 
 export default function Sidebar({
@@ -27,10 +27,11 @@ export default function Sidebar({
   const isActive = (href: string) => pathname === href;
 
   const isAdmin = role === "admin";
+  const isGestor = role === "gestor";
+  const isAdminTotal = role === "admin";
 
   const router = useRouter();
   const[saindo , setSaindo]= useState(false)
-
 
 
 
@@ -91,7 +92,7 @@ export default function Sidebar({
       </div>
 
       {/* Navegação */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-2 pb-24">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2 pb-24 [&>a]:text-base [&>a]:font-medium [&>a]:text-gray-800 md:[&>a]:text-sm">
 
         {isAdmin ? (
           <>
@@ -185,7 +186,7 @@ export default function Sidebar({
 
             
 
-            {/* Férias e ausências */}
+            {/* Férias  */}
             <Link
               href="/admin/ferias"
               className={`
@@ -203,52 +204,78 @@ export default function Sidebar({
               {isOpen && <span>Férias </span>}
             </Link>
 
-            {isOpen && (
-              <p className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-400 uppercase">
+              {/* Férias  */}
+            <Link
+              href="/admin/faltas"
+              className={`
+                flex items-center gap-3 rounded-lg border-l-4 p-3
+                hover:bg-gray-100
+                ${
+                  isActive("/admin/faltas")
+                    ? "border-black bg-gray-100 font-medium"
+                    : "border-transparent"
+                }
+              `}
+            >
+              <FiCalendar size={20} />
+
+              {isOpen && <span>Faltas </span>}
+            </Link>
+
+            
+              {isAdmin && isOpen && (
+              <p className="px-3 pt-1 pb-2 text-xs font-semibold text-gray-400 uppercase">
                 Sistema
               </p>
             )}
 
-            {/* Acessos */}
-            <Link
-              href="/admin/acessos"
-              className={`
-                flex items-center gap-3 rounded-lg border-l-4 p-3
-                hover:bg-gray-100
-                ${
-                  isActive("/admin/acessos")
-                    ? "border-black bg-gray-100 font-medium"
-                    : "border-transparent"
-                }
-              `}
-            >
-              <FiLock size={20} />
 
-              {isOpen && <span>Acessos e permissões</span>}
-            </Link>
 
-            {/* Definições */}
-            <Link
-              href="/admin/definicoes"
-              className={`
-                flex items-center gap-3 rounded-lg border-l-4 p-3
-                hover:bg-gray-100
-                ${
-                  isActive("/admin/definicoes")
-                    ? "border-black bg-gray-100 font-medium"
-                    : "border-transparent"
-                }
-              `}
-            >
-              <FiSettings size={20} />
+            {isAdminTotal && (
+              <>
+                {/* Acessos */}
+                <Link
+                  href="/admin/acessos"
+                  className={`
+                    flex items-center gap-3 rounded-lg border-l-4 p-3
+                    hover:bg-gray-100
+                    ${
+                      isActive("/admin/acessos")
+                        ? "border-black bg-gray-100 font-medium"
+                        : "border-transparent"
+                    }
+                  `}
+                >
+                  <FiLock size={20} />
 
-              {isOpen && <span>Definições</span>}
-            </Link>
+                  {isOpen && <span>Acessos e permissões</span>}
+                </Link>
+
+                {/* Definições */}
+                <Link
+                  href="/admin/definicoes"
+                  className={`
+                    flex items-center gap-3 rounded-lg border-l-4 p-3
+                    hover:bg-gray-100
+                    ${
+                      isActive("/admin/definicoes")
+                        ? "border-black bg-gray-100 font-medium"
+                        : "border-transparent"
+                    }
+                  `}
+                >
+                  <FiSettings size={20} />
+
+                  {isOpen && <span>Definições</span>}
+                </Link>
+              </>
+            )}
           </>
         ) : (
           <>
             {/* ================= COLABORADOR ================= */}
 
+          
             {/* Principal */}
             <Link
               href="/"
@@ -268,6 +295,7 @@ export default function Sidebar({
             </Link>
 
             {/* Comunicados */}
+            {!isGestor && (<>
             <Link
               href="/comunicados"
               className={`
@@ -284,7 +312,8 @@ export default function Sidebar({
 
               {isOpen && <span>Comunicados</span>}
             </Link>
-
+            
+            
             {/* Clientes */}
             <Link
               href="/clientes"
@@ -302,6 +331,11 @@ export default function Sidebar({
 
               {isOpen && <span>Clientes</span>}
             </Link>
+          
+            </>
+          )}
+
+          
 
            
 
@@ -322,6 +356,57 @@ export default function Sidebar({
 
               {isOpen && <span>Férias</span>}
             </Link>
+
+             <Link
+              href="/faltas"
+              className={`
+                flex items-center gap-3 p-3 rounded-lg border-l-4
+                hover:bg-gray-100
+                ${
+                  isActive("/faltas")
+                    ? "border-black bg-gray-100 font-medium"
+                    : "border-transparent"
+                }
+              `}
+            >
+              <FiCalendar size={20} />
+
+              {isOpen && <span>Faltas</span>}
+            </Link>
+
+              {isGestor && isOpen && (
+              <p className="px-3 pt-1 pb-2 text-xs font-semibold text-gray-400 uppercase">
+                Gestão atribuída
+              </p>
+            )}
+
+            {isGestor && (
+              <>
+                <Link
+                  href="/admin/colaboradores"
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/colaboradores") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                >
+                  <FiUsers size={20} />
+                  {isOpen && <span>Colaboradores</span>}
+                </Link>
+                <Link
+                  href="/admin/comunicados"
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/comunicados") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                >
+                  <PiMegaphone size={20} />
+                  {isOpen && <span>Comunicados</span>}
+                </Link>
+                <Link
+                  href="/admin/clientes"
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/clientes") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                >
+                  <FiBriefcase size={20} />
+                  {isOpen && <span>Clientes</span>}
+                </Link>
+              </>
+            )}
+
+
           </>
         )}
       </nav>

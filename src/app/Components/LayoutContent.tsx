@@ -18,7 +18,7 @@ export default function LayoutContent({
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-const [role, setRole] = useState<"admin" | "colaborador" | null>(null);
+const [role, setRole] = useState<"admin" | "gestor" | "colaborador" | null>(null);
 
   useEffect(() => {
     if (window.matchMedia("(min-width: 768px)").matches) {
@@ -53,6 +53,29 @@ useEffect(() => {
       if (error || !perfil) {
         console.error("Erro ao carregar perfil do usuário:", error);
         router.replace("/login");
+        return;
+      }
+
+      const roleAtual = perfil.role as "admin" | "gestor" | "colaborador";
+      const rotaAdmin = pathname.startsWith("/admin");
+      const rotaAdminTotal = pathname === "/admin/acessos" || pathname === "/admin/definicoes";
+      const rotaGestorPermitida = [
+        "/admin/clientes",
+        "/admin/comunicados",
+        "/admin/colaboradores",
+      ].includes(pathname);
+
+      if (
+        rotaAdmin &&
+        roleAtual !== "admin" &&
+        !(roleAtual === "gestor" && rotaGestorPermitida)
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      if (rotaAdminTotal && roleAtual !== "admin") {
+        router.replace("/admin");
         return;
       }
 

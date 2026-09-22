@@ -52,7 +52,7 @@ export default function LoginPage() {
       .eq("id_usuario", (await supabase.auth.getUser()).data.user?.id)
       .single();
 
-    router.replace(perfil?.role === "admin" ? "/admin" : "/");
+    router.replace(perfil?.role === "admin" || perfil?.role === "gestor" ? "/admin" : "/");
     router.refresh();
 
 
@@ -154,8 +154,8 @@ export default function LoginPage() {
 
 
         <div className="mt-6 border-t border-gray-100 pt-5 text-center">
-            <p className="text-xs text-gray-500">
-               Deseja entrar no Trello?
+            <p className="text-xs text-gray-500 ">
+               Deseja entrar no ITS4WORK?
             </p>
 
       <a

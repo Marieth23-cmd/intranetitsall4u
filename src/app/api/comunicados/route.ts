@@ -34,9 +34,9 @@ export async function  POST(request:Request) {
         )
     }
 
-    if(perfilAdmin?.role !== "admin"){
+    if(perfilAdmin?.role !== "admin" && perfilAdmin?.role !== "gestor"){
         return NextResponse.json(
-            {error:"Acesso restrito para administradores"},
+            {error:"Acesso restrito para administradores e gestores"},
             {status:403}
         )
     }
@@ -111,9 +111,9 @@ export async function  POST(request:Request) {
             .eq("id_usuario", user.id)
             .single();
 
-        if (perfilError || perfilAdmin?.role !== "admin") {
+        if (perfilError || (perfilAdmin?.role !== "admin" && perfilAdmin?.role !== "gestor")) {
             return NextResponse.json(
-                { error: "Acesso restrito para administradores" },
+                { error: "Acesso restrito para administradores e gestores" },
                 { status: 403 }
             );
         }
@@ -158,9 +158,9 @@ export async function  POST(request:Request) {
             .eq("id_usuario", user.id)
             .single();
 
-        if (perfilError || perfilAdmin?.role !== "admin") {
+        if (perfilError || (perfilAdmin?.role !== "admin" && perfilAdmin?.role !== "gestor")) {
             return NextResponse.json(
-                { error: "Acesso restrito para administradores" },
+                { error: "Acesso restrito para administradores e gestores" },
                 { status: 403 }
             );
         }

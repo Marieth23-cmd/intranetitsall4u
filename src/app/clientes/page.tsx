@@ -63,9 +63,16 @@ export default function ClientesPage() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+            .from("usuarios")
+            .select("role")
+            .eq("id_usuario", user.id)
+            .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
-        if (role === "colaborador") {
+        if (role === "colaborador" || role === "gestor") {
           setAutorizado(true);
         } else if (role === "admin") {
           router.replace("/admin");
@@ -117,7 +124,7 @@ export default function ClientesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       <header>
-        <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">Clientes</h1>
+        <h1 className="page-title">Clientes</h1>
       
       </header>
 
@@ -127,7 +134,7 @@ export default function ClientesPage() {
         {clientes.map((cliente) => (
           <article key={cliente.nome} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-base font-semibold text-gray-800">{cliente.nome}</h2>
+              <h2 className="section-title">{cliente.nome}</h2>
               <EstadoCliente estado={cliente.estado} />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">

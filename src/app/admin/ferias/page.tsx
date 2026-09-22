@@ -77,7 +77,14 @@ export default function FeriasAdminPage() {
         setLoading(true);
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+              .from("usuarios")
+              .select("role")
+              .eq("id_usuario", user.id)
+              .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
         if (role === "admin") {
           setAutorizado(true);
@@ -193,7 +200,7 @@ export default function FeriasAdminPage() {
       
       {/* Cabeçalho */}
       <header>
-        <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+        <h1 className="page-title">
           Gestão de férias
         </h1>
       </header>
@@ -203,7 +210,7 @@ export default function FeriasAdminPage() {
         <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">De férias</p>
+              <p className="content-description">De férias</p>
               <p className="mt-2 text-2xl font-semibold text-gray-800">{deFeriasHoje.length}</p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
@@ -215,7 +222,7 @@ export default function FeriasAdminPage() {
         <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Próximas férias</p>
+              <p className="content-description">Próximas férias</p>
               <p className="mt-2 text-2xl font-semibold text-gray-800">{totalProximasFerias}</p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50">
@@ -227,7 +234,7 @@ export default function FeriasAdminPage() {
         <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Pedidos pendentes</p>
+              <p className="content-description">Pedidos pendentes</p>
               <p className="mt-2 text-2xl font-semibold text-gray-800">{pedidosPendentes}</p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
@@ -239,7 +246,7 @@ export default function FeriasAdminPage() {
         <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Férias aprovadas</p>
+              <p className="content-description">Férias aprovadas</p>
               <p className="mt-2 text-2xl font-semibold text-gray-800">{feriasAprovadas}</p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">

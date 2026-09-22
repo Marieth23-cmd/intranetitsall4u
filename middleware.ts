@@ -40,9 +40,20 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // 3. 🟢 CORREÇÃO DA SEGURANÇA: Lê a role direto dos metadados do token (Sem bater no banco!)
-  const usuarioRole = user.user_metadata?.role || 'colaborador'
+  // A tabela usuarios é a fonte de verdade da role. Os metadados podem ficar
+  // desatualizados quando a role é alterada pelo administrador.
+  const { data: perfil } = await supabase
+    .from('usuarios')
+    .select('role')
+    .eq('id_usuario', user.id)
+    .maybeSingle()
+  const usuarioRole = perfil?.role || 'colaborador'
   const acessandoAreaAdmin = url.pathname.startsWith('/admin')
+  const rotaAdminPermitidaParaGestor = [
+    '/admin/clientes',
+    '/admin/comunicados',
+    '/admin/colaboradores',
+  ].includes(url.pathname)
 
   // REGRA 2: Se já ESTÁ LOGADO e tenta aceder à página de login -> Redireciona para a sua Home correta
   if (solicitandoLogin) {
@@ -51,7 +62,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // REGRA 3: Se for COLABORADOR e tentar forçar a URL escrevendo /admin -> Expulsa de volta para o /
-  if (usuarioRole === 'colaborador' && acessandoAreaAdmin) {
+  if (
+    acessandoAreaAdmin &&
+    usuarioRole !== 'admin' &&
+    !(usuarioRole === 'gestor' && rotaAdminPermitidaParaGestor)
+  ) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }

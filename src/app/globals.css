@@ -26,4 +26,20 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .page-title {
+    @apply text-2xl font-bold text-gray-800 sm:text-3xl;
+  }
+
+  .section-title {
+    @apply text-base font-semibold text-gray-800 sm:text-lg;
+  }
+
+  .content-description {
+    @apply text-sm leading-relaxed text-gray-600;
+  }
+
+  .content-caption {
+    @apply text-xs text-gray-400;
+  }
 }

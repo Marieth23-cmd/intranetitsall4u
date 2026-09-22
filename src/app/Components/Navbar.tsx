@@ -31,7 +31,7 @@ type ResultadoPesquisa = {
   caminho: string;
 };
 
-type Role = "admin" | "colaborador";
+type Role = "admin" | "gestor" | "colaborador";
 
 export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -122,14 +122,20 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
       if(!user)return
 
-      const role = user.user_metadata?.role || "Colaborador";
+      const { data: perfil } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id_usuario", user.id)
+        .maybeSingle();
+      const role = perfil?.role || "colaborador";
       const nomeAuth = user.user_metadata?.nome || "Utilizador da intranet"
       
       // 🟢 As tuas validações originais mantidas 100% intactas:
-      setRole(role === "admin" ? "admin" : "colaborador");
+      const roleAtual: Role = role === "admin" || role === "gestor" ? role : "colaborador";
+      setRole(roleAtual);
       setFotoUrl(user.user_metadata?.foto_url || null);
 
-      if(role === "admin"){
+      if(roleAtual === "admin"){
         setUsuarioRole({
           nome: nomeAuth,
           cargo: "Administrador Geral",
@@ -337,7 +343,7 @@ async function handleUploadFoto(
           <CiSearch size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
-            placeholder={role === "admin" ? "Pesquisar colaboradores, clientes e comunicados..." : "Pesquisar clientes e comunicados..."}
+            placeholder={role !== "colaborador" ? "Pesquisar colaboradores, clientes e comunicados..." : "Pesquisar clientes e comunicados..."}
             value={termoPesquisa}
             onChange={(event) => setTermoPesquisa(event.target.value)}
             className="w-[250px] rounded-lg border border-gray-300 py-2 pl-11 pr-4 text-sm outline-none transition focus:border-blue-700 focus:ring-1 focus:ring-blue-700 lg:w-[500px]"
@@ -383,7 +389,7 @@ async function handleUploadFoto(
                   <input
                     type="search"
                     autoFocus
-                    placeholder={role === "admin" ? "Pesquisar colaboradores, clientes e comunicados..." : "Pesquisar clientes e comunicados..."}
+                    placeholder={role !== "colaborador" ? "Pesquisar colaboradores, clientes e comunicados..." : "Pesquisar clientes e comunicados..."}
                     value={termoPesquisa}
                     onChange={(event) => setTermoPesquisa(event.target.value)}
                     className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"

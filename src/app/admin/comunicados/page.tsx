@@ -2,8 +2,11 @@
 import {useState, useEffect, useCallback} from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiEye } from "react-icons/fi";
 import { toast } from "sonner";
+
 import {createClient} from "../../../../lib/supabase/client"
 import {useRouter} from "next/navigation"
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 
 
@@ -36,6 +39,7 @@ export default function ComunicadosAdminPage() {
   const [salvando , setSalvando]= useState(false)
   const [autorizado, setAutorizado] = useState(false);
   const [verificandoAcesso, setVerificandoAcesso] = useState(true)
+  const [role, setRole] = useState<"admin" | "gestor" | null>(null);
   const router = useRouter()
  const [form, setForm] = useState({
   titulo: "",
@@ -52,11 +56,19 @@ export default function ComunicadosAdminPage() {
   });
 
 
-// 1. Estados e Tipagem explícita para evitar o erro do "any"
 const [leitores, setLeitores] = useState<VisualizacaoLeitor[]>([]);
 const [modalLeitoresAberto, setModalLeitoresAberto] = useState(false);
 const [carregandoLeitores, setCarregandoLeitores] = useState(false);
 const [comunicadoVisualizado, setComunicadoVisualizado] = useState("");
+ const [modalLeituraAberto, setModalLeituraAberto] = useState(false);
+  const [comunicadoParaLer, setComunicadoParaLer] = useState<Comunicado | null>(null);
+
+
+ function abrirLeitorComunicado(comunicado: Comunicado) {
+    setComunicadoParaLer(comunicado);
+    setModalLeituraAberto(true);
+  
+  }
 
 async function verQuemViu(comunicado: Comunicado) {
   setComunicadoVisualizado(comunicado.titulo);
@@ -90,9 +102,17 @@ async function verQuemViu(comunicado: Comunicado) {
         setLoading(true);
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+              .from("usuarios")
+              .select("role")
+              .eq("id_usuario", user.id)
+              .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
-        if (role === "admin") {
+        if (role === "admin" || role === "gestor") {
+          setRole(role);
           setAutorizado(true);
         } else {
           router.replace("/");
@@ -108,10 +128,6 @@ async function verQuemViu(comunicado: Comunicado) {
 
     verificarAcessoAdmin();
   }, [router]);
-
-
-
-
 
 
   const fetchComunicados = useCallback(async () => {
@@ -262,22 +278,15 @@ async function eliminarComunicado(idComunicado: string) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
-          <h1 className="text-2xl font-semibold text-gray-700 sm:text-3xl">
+          <h1 className="page-title">
             Gestão de comunicados
           </h1>
-
-         
         </div>
 
         <button
         onClick={()=>setmodalAberto(true)}
-          className="
-            inline-flex items-center justify-center gap-2
-            rounded-lg bg-blue-700 px-4 py-2.5
-            text-sm font-medium text-white
-            hover:bg-blue-600
-          "
-        >
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5
+            text-sm font-medium text-white hover:bg-blue-600 " >
           <FiPlus size={18} />
           Novo comunicado
         </button>
@@ -294,6 +303,12 @@ async function eliminarComunicado(idComunicado: string) {
       year: "numeric",
     });
 
+
+    const textoGrande= comunicado.descricao.length> 220
+    const descricaoExibida= textoGrande
+    ? `${comunicado.descricao.substring(0,200)} ...`
+    : comunicado.descricao;
+
     return (
       <article
         key={comunicado.id_comunicados || index} 
@@ -306,7 +321,7 @@ async function eliminarComunicado(idComunicado: string) {
 
           <div className="max-w-3xl">
              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="section-title mb-2">
             {comunicado.titulo}
           </h2>
 
@@ -314,9 +329,22 @@ async function eliminarComunicado(idComunicado: string) {
             {comunicado.usuarios?.email || "Sistema"}
           </span>
         </div>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              {comunicado.descricao}
-            </p>
+            <div className="content-description prose prose-sm mt-3 max-w-none whitespace-pre-line">
+              <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                {descricaoExibida}
+                </ReactMarkdown>
+            </div>
+
+            {textoGrande && (
+              <button
+                type="button"
+                onClick={() => abrirLeitorComunicado(comunicado)}
+                className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-1"
+              >
+                Ler comunicado completo 
+              </button>
+            )}
+
 
             <p className="mt-4 text-xs text-gray-400">
               {dataFormatada} · {comunicado.local || "Geral"}
@@ -325,30 +353,30 @@ async function eliminarComunicado(idComunicado: string) {
 
           {/* Ações */}
           <div className="flex items-center gap-2">
-            <button
+            {(role === "admin" || role === "gestor") && <button
               onClick={() => void verQuemViu(comunicado)}
               className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
               title="Ver leitores"
               aria-label={`Ver quem leu ${comunicado.titulo}`}
             >
               <FiEye size={18} />
-            </button>
+            </button>}
 
-            <button
+            {(role === "admin" || role === "gestor") && <button
             onClick={() => abrirModalEditar(comunicado)}
               className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
               title="Editar"
             >
               <FiEdit2 size={18} />
-            </button>
+            </button>}
 
-            <button
+            {(role === "admin" || role === "gestor") && <button
             onClick={() => confirmarEliminacao(comunicado.id_comunicados)}
               className="rounded-lg border border-red-100 p-2 text-red-500 hover:bg-red-50"
               title="Eliminar"
             >
               <FiTrash2 size={18} />
-            </button>
+            </button>}
           </div>
 
         </div>
@@ -361,9 +389,12 @@ async function eliminarComunicado(idComunicado: string) {
 
 
   {modalAberto && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div
+      onMouseDown={(event) => event.target === event.currentTarget && setmodalAberto(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    >
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-        <h2 className="text-xl font-semibold text-gray-800">Criar Comunicado</h2>
+        <h2 className="section-title">Criar Comunicado</h2>
 
 
       <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
@@ -387,12 +418,18 @@ async function eliminarComunicado(idComunicado: string) {
             value={form.descricao}
             onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-            rows={3}
+            rows={6}
           />
+
+          <p className="mt-1 text-[11px] text-gray-400">
+            Suporta formatação profissional: Usa **texto** para negrito, *texto* para itálico e pressione Enter para criar parágrafos.
+         </p>
+
+         
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600">Local / Alvo</label>
+          <label className="block text-xs font-medium text-gray-600">Local/Alvo</label>
           <input
             type="text"
             value={form.local}
@@ -435,10 +472,13 @@ async function eliminarComunicado(idComunicado: string) {
 
         {/* MODAL DE EDIÇÃO DE COMUNICADOS */}
 {modalEditarAberto && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+  <div
+    onMouseDown={(event) => event.target === event.currentTarget && setModalEditarAberto(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+  >
     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
       
-      <h2 className="text-xl font-semibold text-gray-800">Editar Comunicado</h2>
+      <h2 className="section-title">Editar Comunicado</h2>
       <p className="mt-1 text-xs text-gray-500">Altere as informações do aviso institucional.</p>
 
       <form onSubmit={salvarEdicaoComunicado} className="mt-4 space-y-4">
@@ -472,7 +512,6 @@ async function eliminarComunicado(idComunicado: string) {
           <label className="block text-xs font-medium text-gray-600">Local / Alvo</label>
           <input
             type="text"
-            required
             value={comunicadoSelecionado.local}
             onChange={(e) => setComunicadoSelecionado({ ...comunicadoSelecionado, local: e.target.value })}
             className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
@@ -503,15 +542,66 @@ async function eliminarComunicado(idComunicado: string) {
   </div>
 )}
 
+
+
+ {modalLeituraAberto && comunicadoParaLer && (
+    <div
+   onMouseDown={(event) => event.target === event.currentTarget && setModalLeituraAberto(false)}
+     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[85vh] overflow-y-auto">
+        
+        {/* Cabeçalho do Leitor */}
+        <div className="border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {comunicadoParaLer.local || "Geral"}
+            </span>
+            <span className="text-xs text-gray-400">
+              Publicado em {new Date(comunicadoParaLer.data_publicacao).toLocaleDateString("pt-PT")}
+            </span>
+          </div>
+          <h2 className="mt-2 text-xl font-bold text-gray-900 sm:text-2xl">
+            {comunicadoParaLer.titulo}
+          </h2>
+        </div>
+
+        {/* 🌟 CONTEÚDO EM MARKDOWN TOTALMENTE EXPANDIDO E FORMADO */}
+        <div className="mt-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line text-left prose max-w-none border-b border-gray-100 pb-6 min-h-[100px]">
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+            {comunicadoParaLer.descricao}
+          </ReactMarkdown>
+        </div>
+
+        {/* Rodapé do Modal */}
+        <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+          <p>Publicado por: {comunicadoParaLer.usuarios?.email || "Sistema"}</p>
+          <button
+            type="button"
+            onClick={() => setModalLeituraAberto(false)}
+            className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-gray-800 transition cursor-pointer"
+          >
+            Fechar Leitura
+          </button>
+        </div>
+
+      </div>
+    </div>
+  )}
+
+
+
 {/* MODAL DE CONFIRMADOS DE LEITURA CORRIGIDO */}
 {modalLeitoresAberto && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+  <div
+    onMouseDown={(event) => event.target === event.currentTarget && setModalLeitoresAberto(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+  >
     <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-      <h2 className="text-lg font-semibold text-gray-900">Lido por</h2>
+      <h2 className="section-title">Lido por</h2>
       <p className="mt-1 truncate text-sm font-medium text-gray-700" title={comunicadoVisualizado}>
         {comunicadoVisualizado}
       </p>
-      <p className="text-xs text-gray-500 mt-1">Colaboradores que abriram este comunicado.</p>
+      <p className="content-caption mt-1">Colaboradores que abriram este comunicado.</p>
 
       <div className="mt-4 max-h-60 overflow-y-auto space-y-3 pr-1">
         {carregandoLeitores ? (
@@ -554,6 +644,7 @@ async function eliminarComunicado(idComunicado: string) {
     </div>
   </div>
 )}
+
 
 
 

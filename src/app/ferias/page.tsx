@@ -15,6 +15,18 @@ type PedidoFerias ={
   data_solicitacao:string
 }
 
+type DadosPerfilFerias = {
+  dias_totais: number;
+  dias_gozados: number;
+  dias_pendentes: number;
+  dias_disponiveis: number;
+  elegivel: boolean;
+  meses_trabalhados: number;
+  mensagem: string;
+};
+
+
+
 function  EstadoFerias({estado } : {estado:string}){
   const est =(estado ||  "pendente").toLocaleLowerCase()
    if (est === "aprovado") {
@@ -37,7 +49,17 @@ const [carregandoDados, setCarregandoDados] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const router = useRouter();
+ 
 
+  const [saldo, setSaldo] = useState<DadosPerfilFerias>({
+    dias_totais: 0,
+    dias_gozados: 0,
+    dias_pendentes: 0,
+    dias_disponiveis: 0,
+    elegivel: false,
+    meses_trabalhados: 0,
+    mensagem: "A calcular...",
+  });
 
   const [listaPedidos, setListaPedidos] = useState<PedidoFerias[]>([]);
   const [form, setForm] = useState({ data_inicio: "", data_fim: "" });
@@ -49,9 +71,16 @@ useEffect(()=>{
 try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        const role = user?.user_metadata?.role;
+        const { data: perfil } = user
+          ? await supabase
+            .from("usuarios")
+            .select("role")
+            .eq("id_usuario", user.id)
+            .maybeSingle()
+          : { data: null };
+        const role = perfil?.role;
 
-        if (role === "colaborador") {
+        if (role === "colaborador" || role === "gestor") {
           setAutorizado(true);
           
         } else if (role === "admin") {
@@ -74,65 +103,81 @@ try {
  }, [router])
 
 
- 
-async function carregarMinhasFerias() {
-    try {
-      setCarregandoDados(true);
-      const resposta = await fetch("/api/ferias", { cache: "no-store" });
-      const dados = await resposta.json();
-      if (resposta.ok) {
-        setListaPedidos(dados.pedidos || []);
-      }
-    } catch (error) {
-      console.error("Erro ao ler férias:", error);
-    } finally {
-      setCarregandoDados(false);
+ async function carregarMinhasFerias() {
+  try {
+    setCarregandoDados(true);
+    
+    // Puxa as férias
+    const resposta = await fetch("/api/ferias", { cache: "no-store" });
+    const dados = await resposta.json();
+    if (resposta.ok) {
+      setListaPedidos(dados.pedidos || []);
+      if (dados.saldo) setSaldo(dados.saldo);
+    } else {
+      toast.error(dados.error || "Não foi possível carregar os dados de férias.");
     }
+  } catch (error) {
+    console.error("Erro ao ler dados de férias:", error);
+  } finally {
+    setCarregandoDados(false);
+  }
+}
 
+useEffect(()=>{
+  if (!autorizado) return;
+  void carregarMinhasFerias();
+}, [autorizado])
+
+async function lidarSolicitacaoFerias(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  const hojeLocal = new Date();
+  const hojeFormatado = [
+    hojeLocal.getFullYear(),
+    String(hojeLocal.getMonth() + 1).padStart(2, "0"),
+    String(hojeLocal.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  if (!form.data_inicio || !form.data_fim) {
+    toast.error("Selecione as datas de início e fim.");
+    return;
   }
 
-    useEffect(()=>{
-      if(autorizado) carregarMinhasFerias()
-    }, [autorizado])
+  if (form.data_fim < form.data_inicio) {
+    toast.error("A data de fim não pode ser anterior à data de início.");
+    return;
+  }
 
+  if (form.data_inicio < hojeFormatado || form.data_fim < hojeFormatado) {
+    toast.error("Não é possível solicitar férias em datas passadas.");
+    return;
+  }
 
+  try {
+    setSalvando(true);
+    const resposta = await fetch("/api/ferias", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const dados = await resposta.json();
 
-    async function lidarSolicitacaoFerias(e:React.FormEvent) {
-      e.preventDefault()
-      if(new Date(form.data_fim) < new Date(form.data_inicio)){
-        toast.info("A data de fim não pode ser menor que a data de início!")
-        return;
-      }
-
-      try {
-        
-        setSalvando(true)
-        const resposta = await fetch("/api/ferias" ,
-           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(form)
-           })
-
-
-           if(resposta.ok){
-            toast.success("Solicitação de ferias enviada com sucesso ")
-            setModalAberto(false)
-            setForm({data_fim: "" , data_inicio: ""})
-            carregarMinhasFerias()
-           }else{
-            const err = await resposta.json()
-            toast.error( `Erro :${err.error}`)
-           }
-
-      } catch (error) {
-        console.error(error)
-        
-      }finally{
-        setSalvando(false)
-      }
-
+    if (!resposta.ok) {
+      toast.error(dados.error || "Não foi possível submeter o pedido.");
+      return;
     }
+
+    toast.success("Pedido de férias enviado com sucesso.");
+    setForm({ data_inicio: "", data_fim: "" });
+    setModalAberto(false);
+    await carregarMinhasFerias();
+  } catch (error) {
+    console.error("Erro ao submeter pedido de férias:", error);
+    toast.error("Não foi possível submeter o pedido.");
+  } finally {
+    setSalvando(false);
+  }
+}
 
 
     const proximasFeriasReal= listaPedidos.find(p=> p.estado_ferias === "aprovado")
@@ -171,33 +216,79 @@ async function carregarMinhasFerias() {
 
 
 
+  // Calcula o saldo com base nos campos disponibilizados pelo perfil.
+  const diasTotais = saldo.dias_totais;
+  const diasDisponiveis = saldo.dias_disponiveis;
+  const saldoEsgotado = !saldo.elegivel || diasDisponiveis <= 0;
 
+const hojeData = new Date();
+const hoje = [
+  hojeData.getFullYear(),
+  String(hojeData.getMonth() + 1).padStart(2, "0"),
+  String(hojeData.getDate()).padStart(2, "0"),
+].join("-");
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
 
-      {/* Cabeçalho */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
+      {/* Cabeçalho Uniforme */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800 sm:text-3xl">
+          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
             Férias
           </h1>
-
           <p className="mt-1 text-sm text-gray-500">
-            Consulte as suas férias e acompanhe os seus pedidos.
+            Consulte as suas férias e acompanhe os seus pedidos regulamentares.
           </p>
         </div>
-
-         <button
-          onClick={() => setModalAberto(true)}
+            
+        <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 cursor-pointer"
+          disabled={saldoEsgotado}
+          title={saldoEsgotado ? saldo.mensagem : "Solicitar férias"}
+          onClick={() => setModalAberto(true)}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-sm transition ${
+            saldoEsgotado
+              ? "bg-gray-400 cursor-not-allowed opacity-60" 
+              : "bg-blue-600 hover:bg-blue-500 cursor-pointer"
+          }`}
         >
           <FiPlus size={17} />
-          Solicitar férias
+          {saldoEsgotado
+            ? saldo.elegivel ? "Saldo de férias esgotado" : "Ainda não elegível"
+            : "Solicitar férias"}
         </button>
       </header>
+
+      {!saldo.elegivel && (
+        <p className="mt-3 text-sm text-amber-700" role="status">
+          {saldo.mensagem}
+        </p>
+      )}
+
+      {/* 📊 METRICAS DE SALDO DE FÉRIAS CORRIGIDAS COM A API */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-6">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Dias Totais de Direito</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-gray-800">{diasTotais}</span>
+            <span className="text-xs text-gray-500">Dias adquiridos</span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Dias Disponíveis Restantes</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className={`text-2xl font-bold ${diasDisponiveis <= 5 ? 'text-red-600' : 'text-green-600'}`}>
+              {diasDisponiveis}
+            </span>
+            <span className="text-xs text-gray-500">Dias livres para uso</span>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Gozados: {saldo.dias_gozados} · Pendentes: {saldo.dias_pendentes}
+          </p>
+        </div>
+      </div>
 
       {/* Próximas férias */}
       <section className="mt-6">
@@ -207,8 +298,8 @@ async function carregarMinhasFerias() {
               <FiCalendar size={19} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">Próximas férias</h2>
-              <p className="mt-1 text-sm text-gray-500">O seu próximo período de férias planeado.</p>
+              <h2 className="section-title">Próximas férias</h2>
+              <p className="content-description mt-1">O seu próximo período de férias planeado.</p>
             </div>
           </div>
 
@@ -260,8 +351,8 @@ async function carregarMinhasFerias() {
                 <FiClock size={19} className="text-gray-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-800">Histórico de pedidos</h2>
-                <p className="mt-1 text-sm text-gray-500">Consulte os períodos de férias anteriores ou solicitações em análise.</p>
+                <h2 className="section-title">Histórico de pedidos</h2>
+                <p className="content-description mt-1">Consulte os períodos de férias anteriores ou solicitações em análise.</p>
               </div>
             </div>
           </div>
@@ -321,19 +412,25 @@ async function carregarMinhasFerias() {
 
       {/* MODAL DE SOLICITAÇÃO DE FÉRIAS */}
 {modalAberto && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+  <div
+    onMouseDown={(event) => event.target === event.currentTarget && setModalAberto(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+  >
     <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl animate-in zoom-in-95 duration-150">
-      <h2 className="text-lg font-semibold text-gray-800">Solicitar Período de Férias</h2>
-      <p className="text-xs text-gray-500 mt-1">Indique as datas pretendidas para a sua ausência.</p>
+      <h2 className="section-title">Solicitar Período de Férias</h2>
+      <p className="content-caption mt-1">Indique as datas pretendidas para a sua ausência.</p>
 
       <form onSubmit={lidarSolicitacaoFerias} className="mt-4 space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-600">Data de Início</label>
           <input
-            type="date"
+           type="date"
             required
+            min={hoje}
             value={form.data_inicio}
-            onChange={(e) => setForm({ ...form, data_inicio: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, data_inicio: e.target.value })
+            }
             className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
           />
         </div>
@@ -341,10 +438,13 @@ async function carregarMinhasFerias() {
         <div>
           <label className="block text-xs font-medium text-gray-600">Data de Fim</label>
           <input
-            type="date"
-            required
-            value={form.data_fim}
-            onChange={(e) => setForm({ ...form, data_fim: e.target.value })}
+              type="date"
+              required
+              min={form.data_inicio || hoje}
+              value={form.data_fim}
+              onChange={(e) =>
+                setForm({ ...form, data_fim: e.target.value })
+    }
             className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none"
           />
         </div>
