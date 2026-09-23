@@ -56,12 +56,16 @@ export default function AcessosAdminPage() {
       const { count: qtdGestores } = await supabase
         .from("usuarios")
         .select("*", { count: "exact", head: true })
-        .eq("role", "gestor");
-
-      const { count: qtdColabs } = await supabase
-        .from("usuarios")
+        .eq("role", "gestor")
+       
+     const { count: qtdColabs, error } = await supabase
+        .from("colaboradores")
         .select("*", { count: "exact", head: true })
-        .eq("role", "colaborador");
+        .eq("estado", "ACTIVO");
+
+        console.log("qtdColabs:", qtdColabs);
+        console.log("error:", error);
+
 
       setContadores({
         admin: qtdAdmins || 1,
