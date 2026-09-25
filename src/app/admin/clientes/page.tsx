@@ -2,6 +2,8 @@
 import {useState, useEffect} from "react";
 import { FiPlus,FiEdit2, FiSearch} from "react-icons/fi";
 import { createClient } from "../../../../lib/supabase/client";
+import { FiTrash2 } from "react-icons/fi";
+import {toast} from "sonner"
 
 type clientes = {
   id_cliente: number;
@@ -106,6 +108,48 @@ const clientesFiltrados = clientes.filter((cliente) => {
 });
 
 
+
+function confirmarEliminacao(id_cliente: number) {
+  toast("Tem a certeza que deseja eliminar este cliente?", {
+    duration: 5000,
+    action: {
+      label: "Confirmar",
+      onClick: () => {
+        void eliminarCliente(id_cliente);
+      },
+    },
+    cancel: {
+      label: "Cancelar",
+      onClick: () => {},
+    },
+  });
+}
+
+
+async function eliminarCliente(id_cliente: number) {
+  try {
+    const resposta = await fetch("/api/clientes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_cliente }),
+    });
+
+    const textoResposta = await resposta.text();
+    const dados = textoResposta ? JSON.parse(textoResposta) : {};
+
+    if (resposta.ok) {
+      toast.success("Cliente removido com sucesso!");
+      await fetchClientes();
+    } else {
+      toast.error(`Erro ao eliminar: ${dados.error || "Resposta vazia do servidor"}`);
+    }
+  } catch (error) {
+    console.error("Erro ao apagar:", error);
+    toast.error("Erro interno ao tentar eliminar");
+  }
+}
+
+
 const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
   event.preventDefault();
   try {
@@ -181,6 +225,10 @@ const handleEditar = async (event: React.FormEvent<HTMLFormElement>) => {
     setSalvandoEdicao(false);
   }
 };
+
+
+
+
 
 
 
@@ -284,7 +332,9 @@ if(loading){
             </dl>
 
             {/* Ação */}
-            <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className=" flex gap-4 mt-4 border-t border-gray-100 pt-4">
+
+
 
               {(role === "admin" || role === "gestor") && <button
                 type="button"
@@ -301,6 +351,23 @@ if(loading){
                 <FiEdit2 size={16} />
                 Editar cliente
               </button>}
+
+              {(role === "admin" || role === "gestor") && <button
+                type="button"
+                onClick={() => confirmarEliminacao(cliente.id_cliente)}
+                className="
+                  inline-flex w-full items-center
+                  justify-center gap-2
+                  rounded-md border border-gray-200
+                  px-3 py-2 text-sm text-gray-600
+                  transition hover:bg-gray-50
+                  hover:text-gray-800
+                "
+              >
+                <FiEdit2 size={16} />
+                Elimina Cliente
+              </button>}
+
 
             </div>
 
@@ -376,9 +443,9 @@ if(loading){
 
                 <td className="px-5 py-4">
 
-                  <div className="flex justify-end">
+                  <div className="flex gap-1 justify-end">
 
-                    {(role === "admin" || role === "gestor") && <button
+                     {(role === "admin" || role === "gestor") && <button
                       type="button"
                       onClick={() => abrirEdicao(cliente)}
                       title="Editar cliente"
@@ -391,6 +458,22 @@ if(loading){
                     >
                       <FiEdit2 size={17} />
                     </button>}
+
+                    {(role === "admin" || role === "gestor") && <button
+                      type="button"
+                      onClick={() => confirmarEliminacao(cliente.id_cliente)}
+                      title="Eliminar cliente"
+                      className="
+                         rounded-lg border border-red-100 p-2 text-red-500 hover:bg-red-50
+                       
+                        transition 
+                        hover:text-red-800
+                      "
+                    >
+                      <FiTrash2 size={17} />
+                    </button>}
+
+                    
 
                   </div>
 
@@ -441,15 +524,25 @@ if(loading){
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600">Projetos</label>
-                <input
-                  type="number"
-                  required
-                  value={novoCliente.projetos}
-                  onChange={(e) => setNovoCliente({ ...novoCliente, projetos: parseInt(e.target.value) })}
-                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  placeholder="Digite o número de projetos"
-                />
+              <label className="block text-xs font-medium text-gray-600">Projetos</label>
+              <input
+              type="number"
+              required
+              min={1}
+              value={novoCliente.projetos}
+              onChange={(e) => {
+                const valor = parseInt(e.target.value);
+
+                if (valor >= 1) {
+                  setNovoCliente({
+                    ...novoCliente,
+                    projetos: valor
+                  });
+                }
+              }}
+              className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              placeholder="Digite o número de projetos"
+/>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Estado</label>
@@ -513,7 +606,8 @@ if(loading){
                   type="text"
                   required
                   value={clienteEditando.area}
-                  onChange={(event) => setClienteEditando({ ...clienteEditando, area: event.target.value })}
+                  onChange={(event) =>
+                     setClienteEditando({ ...clienteEditando, area: event.target.value })}
                   className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                 />
               </div>
@@ -521,7 +615,8 @@ if(loading){
                 <label className="block text-xs font-medium text-gray-600">Projetos</label>
                 <input
                   type="number"
-                  min="0"
+                  min="1"
+                  step={1}
                   required
                   value={clienteEditando.projetos}
                   onChange={(event) => setClienteEditando({ ...clienteEditando, projetos: Number(event.target.value) })}

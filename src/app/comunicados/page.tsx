@@ -29,10 +29,24 @@ export default function ComunicadosAdminPage() {
   const [comunicadoParaLer, setComunicadoParaLer] = useState<Comunicado | null>(null);
 
 
+ async function marcarComoLida(comunicado: Comunicado) {
+    if (!comunicado.id_comunicados) return;
+
+    try {
+      await fetch("/api/visualizacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_comunicado: comunicado.id_comunicados }),
+      });
+    } catch (error) {
+      console.error("Erro ao registar visualização:", error);
+    }
+  }
+
  function abrirLeitorComunicado(comunicado: Comunicado) {
     setComunicadoParaLer(comunicado);
     setModalLeituraAberto(true);
-  
+    void marcarComoLida(comunicado);
   }
 
 

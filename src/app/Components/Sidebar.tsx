@@ -110,6 +110,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" :"justify-center gap-0"}
                 ${
                   isActive("/admin")
                     ? "border-black bg-gray-100 font-medium"
@@ -117,7 +118,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiHome size={20} />
+              <FiHome size={20} className="shrink-0" />
 
               {isOpen && <span>Painel</span>}
             </Link>
@@ -134,6 +135,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/admin/colaboradores")
                     ? "border-black bg-gray-100 font-medium"
@@ -141,7 +143,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiUsers size={20} />
+              <FiUsers size={20}  className="shrink-0"/>
 
               {isOpen && <span>Colaboradores</span>}
             </Link>
@@ -150,17 +152,12 @@ export default function Sidebar({
             <Link
               href="/admin/comunicados"
               className={`
-                flex items-center gap-3 rounded-lg border-l-4 p-3
-                hover:bg-gray-100
-                ${
-                  isActive("/admin/comunicados")
-                    ? "border-black bg-gray-100 font-medium"
-                    : "border-transparent"
-                }
+                flex items-center rounded-lg border-l-4 p-3 hover:bg-gray-100
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
+                ${isActive("/admin/comunicados") ? "border-black bg-gray-100 font-medium" : "border-transparent"}
               `}
             >
-              <PiMegaphone size={20} />
-
+              <PiMegaphone size={20} className="shrink-0" />
               {isOpen && <span>Comunicados</span>}
             </Link>
 
@@ -170,6 +167,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/admin/clientes")
                     ? "border-black bg-gray-100 font-medium"
@@ -177,14 +175,12 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiBriefcase size={20} />
+              <FiBriefcase size={20}  className="shrink-0"/>
 
               {isOpen && <span>Clientes</span>}
             </Link>
 
            
-
-            
 
             {/* Férias  */}
             <Link
@@ -192,6 +188,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen? "justify-start gap-3" :"justify-center gap-0"}
                 ${
                   isActive("/admin/ferias")
                     ? "border-black bg-gray-100 font-medium"
@@ -199,7 +196,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiCalendar size={20} />
+              <FiCalendar size={20}  className="shrink-0"/>
 
               {isOpen && <span>Férias </span>}
             </Link>
@@ -210,6 +207,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen? "justify-start gap-3" :"justify-center gap-0"}
                 ${
                   isActive("/admin/faltas")
                     ? "border-black bg-gray-100 font-medium"
@@ -217,7 +215,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiCalendar size={20} />
+              <FiCalendar size={20}  className="shrink-0"/>
 
               {isOpen && <span>Faltas </span>}
             </Link>
@@ -239,6 +237,7 @@ export default function Sidebar({
                   className={`
                     flex items-center gap-3 rounded-lg border-l-4 p-3
                     hover:bg-gray-100
+                    ${isOpen? "justify-center gap-3" :"justify-center gap-0"}
                     ${
                       isActive("/admin/acessos")
                         ? "border-black bg-gray-100 font-medium"
@@ -246,7 +245,7 @@ export default function Sidebar({
                     }
                   `}
                 >
-                  <FiLock size={20} />
+                  <FiLock size={20}  className="shrink-0"/>
 
                   {isOpen && <span>Acessos e permissões</span>}
                 </Link>
@@ -257,6 +256,7 @@ export default function Sidebar({
                   className={`
                     flex items-center gap-3 rounded-lg border-l-4 p-3
                     hover:bg-gray-100
+                    ${isOpen? "justify-center gap-3" : "justify-center gap-0"}
                     ${
                       isActive("/admin/definicoes")
                         ? "border-black bg-gray-100 font-medium"
@@ -264,7 +264,7 @@ export default function Sidebar({
                     }
                   `}
                 >
-                  <FiSettings size={20} />
+                  <FiSettings size={20}  className="shrink-0"/>
 
                   {isOpen && <span>Definições</span>}
                 </Link>
@@ -282,6 +282,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/")
                     ? "border-black bg-gray-100 font-medium"
@@ -289,7 +290,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiHome size={20} />
+              <FiHome size={20}  className="shrink-0"/>
 
               {isOpen && <span>Principal</span>}
             </Link>
@@ -301,6 +302,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/comunicados")
                     ? "border-black bg-gray-100 font-medium"
@@ -308,7 +310,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <PiMegaphone size={20} />
+              <PiMegaphone size={20}  className="shrink-0"/>
 
               {isOpen && <span>Comunicados</span>}
             </Link>
@@ -320,6 +322,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/clientes")
                     ? "border-black bg-gray-100 font-medium"
@@ -327,7 +330,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiBriefcase size={20} />
+              <FiBriefcase size={20}  className="shrink-0"/>
 
               {isOpen && <span>Clientes</span>}
             </Link>
@@ -345,6 +348,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/ferias")
                     ? "border-black bg-gray-100 font-medium"
@@ -352,7 +356,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiCalendar size={20} />
+              <FiCalendar size={20} className="shrink-0" />
 
               {isOpen && <span>Férias</span>}
             </Link>
@@ -362,6 +366,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
+                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/faltas")
                     ? "border-black bg-gray-100 font-medium"
@@ -369,7 +374,7 @@ export default function Sidebar({
                 }
               `}
             >
-              <FiCalendar size={20} />
+              <FiCalendar size={20}  className="shrink-0"/>
 
               {isOpen && <span>Faltas</span>}
             </Link>
@@ -384,23 +389,30 @@ export default function Sidebar({
               <>
                 <Link
                   href="/admin/colaboradores"
-                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/colaboradores") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100
+                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"} 
+                    ${isActive("/admin/colaboradores") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
-                  <FiUsers size={20} />
+                  <FiUsers size={20}  className="shrink-0"/>
                   {isOpen && <span>Colaboradores</span>}
                 </Link>
                 <Link
                   href="/admin/comunicados"
-                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/comunicados") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 
+                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                    ${isActive("/admin/comunicados") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
-                  <PiMegaphone size={20} />
+                  <PiMegaphone size={20} className="shrink-0" />
                   {isOpen && <span>Comunicados</span>}
                 </Link>
                 <Link
                   href="/admin/clientes"
-                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 ${isActive("/admin/clientes") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
+                  className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100
+                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+
+                     ${isActive("/admin/clientes") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
-                  <FiBriefcase size={20} />
+                  <FiBriefcase size={20} className="shrink-0" />
                   {isOpen && <span>Clientes</span>}
                 </Link>
               </>

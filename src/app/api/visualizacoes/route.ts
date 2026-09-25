@@ -14,8 +14,8 @@ async function verificarAdmin(supabase: ReturnType<typeof createClient>) {
     .eq("id_usuario", user.id)
     .maybeSingle();
 
-  if (error || perfil?.role !== "admin") {
-    return { user: null, error: NextResponse.json({ error: "Acesso restrito para administradores" }, { status: 403 }) };
+  if (error || (perfil?.role !== "admin" && perfil?.role !== "gestor")) {
+    return { user: null, error: NextResponse.json({ error: "Acesso restrito para administradores e gestores" }, { status: 403 }) };
   }
 
   return { user, error: null };

@@ -120,7 +120,9 @@ export default function GestaoFaltasAdminPage() {
                 <th className="px-6 py-3">Colaborador</th>
                 <th className="px-6 py-3">Data do Incidente</th>
                 <th className="px-6 py-3">Gravidade</th>
+                  <th className="px-6 py-3">Nº de Faltas</th>
                 <th className="px-6 py-3">Observações/Motivo</th>
+              
                 <th className="px-6 py-3 text-right">Ação</th>
               </tr>
             </thead>

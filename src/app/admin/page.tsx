@@ -28,9 +28,9 @@ const heroSlides = [
   },
 ];
 
-// 🟢 SUBSTITUA O SEU TIPO NO TOPO DO ARQUIVO POR ESTE:
+
 type ComunicadoHome = {
-  id_comunicados: string; // 🟢 Corrigido para string para aceitar o UUID e o "banner"
+  id_comunicados: string; 
   titulo: string;
   descricao: string;
   local: string | null;
@@ -38,7 +38,7 @@ type ComunicadoHome = {
   publicado?: boolean;
   usuarios: {
     email: string;
-  } | null; // 🟢 Adicionado para resolver o erro da linha 439
+  } | null; 
 };
 
 
@@ -49,7 +49,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
   const [comunicados, setComunicados] = useState<ComunicadoHome[]>([]);
-  const [primeiroNome , setPrimeiroNome] = useState("Admin")
+  const [primeiroNome , setPrimeiroNome] = useState(" ")
    const [modalLeituraAberto, setModalLeituraAberto] = useState(false);
   const [comunicadoParaLer, setComunicadoParaLer] = useState<ComunicadoHome | null>(null);
 

@@ -137,6 +137,60 @@ export async function PATCH(request: Request) {
     }
 }
 
+export async function DELETE(request: Request) {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const { data: perfilAdmin, error: perfilError } = await supabase
+        .from("usuarios")
+        .select("role")
+        .eq("id_usuario", user.id)
+        .single();
+
+    if (perfilError || (perfilAdmin?.role !== "admin" && perfilAdmin?.role !== "gestor")) {
+        return NextResponse.json(
+            { error: "Acesso restrito para administradores e gestores" },
+            { status: 403 }
+        );
+    }
+
+    try {
+        const { id_cliente } = await request.json();
+
+        if (!id_cliente) {
+            return NextResponse.json(
+                { error: "Identificador do cliente não informado" },
+                { status: 400 }
+            );
+        }
+
+        const { error } = await supabase
+            .from("clientes")
+            .delete()
+            .eq("id_cliente", id_cliente);
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json(
+            { message: "Cliente eliminado com sucesso" },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Erro ao eliminar cliente:", error);
+        return NextResponse.json(
+            { error: "Erro ao processar a requisição" },
+            { status: 500 }
+        );
+    }
+}
 
 export async function GET() {
     const cookieStore = await cookies();

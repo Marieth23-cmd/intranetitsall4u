@@ -8,6 +8,8 @@ import { FaBars, FaImage, FaRegUserCircle } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { MdOutlineNotificationsNone } from "react-icons/md";
 import { toast } from "sonner";
+import { RiLockPasswordLine } from "react-icons/ri";
+
 
 
 interface NavbarProps {
@@ -51,7 +53,6 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
     cargo: "A verificar...",
     foto_url:""
   });
-
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -114,14 +115,14 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
 
   
   
-
-  async function CarregarPerfilNavbar() {
+  const CarregarPerfilNavbar = useCallback(async () => {
     try {
       const supabase = createClient()
       const {data :{user}} = await supabase.auth.getUser()
 
       if(!user)return
 
+      // 1. Mantém a tua busca original de privilégios na tabela usuarios (Suporta o Gestor!)
       const { data: perfil } = await supabase
         .from("usuarios")
         .select("role")
@@ -130,7 +131,7 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
       const role = perfil?.role || "colaborador";
       const nomeAuth = user.user_metadata?.nome || "Utilizador da intranet"
       
-      // 🟢 As tuas validações originais mantidas 100% intactas:
+      // 2. As tuas validações e tipos originais mantidos 100% intactos:
       const roleAtual: Role = role === "admin" || role === "gestor" ? role : "colaborador";
       setRole(roleAtual);
       setFotoUrl(user.user_metadata?.foto_url || null);
@@ -139,31 +140,41 @@ export default function Navbar({ isSidebarOpen, onMenuClick }: NavbarProps) {
         setUsuarioRole({
           nome: nomeAuth,
           cargo: "Administrador Geral",
-          foto_url: user.user_metadata?.foto_url || "" // 🟢 Puxa do Auth para o admin
+          foto_url: user.user_metadata?.foto_url || "" 
         });
       } else {
-        // 🟢 Ajeitado: Agora o teu select também traz a coluna 'foto_url' do banco
+        // 🔒 VALIDAÇÃO MESTRE: Puxa o 'estado' junto com os dados do colaborador
         const {data: colaborador} = await supabase 
           .from("colaboradores")
-          .select("nome, cargo, foto_url")
+          .select("nome, cargo, foto_url, estado") // 🟢 Acrescentado o estado aqui
           .eq("usuario_id", user.id)
           .maybeSingle()
+
+        // 🚨 EXPULSÃO EM TEMPO REAL: Se o Admin desativou a conta, chuta o utilizador imediatamente!
+        if (colaborador && colaborador.estado === "DESACTIVADO") {
+          toast.error("A sua conta foi desativada pelo administrador.");
+          await supabase.auth.signOut(); // Destrói os tokens da sessão no navegador
+          router.replace("/login"); // Manda direto para o login
+          return;
+        }
 
         setUsuarioRole({
           nome: colaborador?.nome || nomeAuth,
           cargo: colaborador?.cargo || "Colaborador geral",
-          foto_url: colaborador?.foto_url || user.user_metadata?.foto_url || "" // 🟢 Puxa do banco ou fallback do Auth
+          foto_url: colaborador?.foto_url || user.user_metadata?.foto_url || "" 
         })
       }
 
     } catch (error) {
       console.log("Erro ao carregar dados do perfil do usuario", error)
     }
-  }
+  }, [router])
 
   useEffect(() => {
     CarregarPerfilNavbar()
-  }, [])
+  }, [CarregarPerfilNavbar])
+
+
 
 
 
@@ -319,6 +330,10 @@ async function handleUploadFoto(
   } finally {
     setEnviandoFoto(false);
   }
+}
+
+const redefinirSenha=()=>{
+   router.push("/redefinir-senha")
 }
 
 
@@ -523,9 +538,23 @@ async function handleUploadFoto(
                       className="hidden"
                     />
                   </label>
+
+           
+
+
+
                 </div>
 
+
                 <div className="my-3 border-t border-gray-100" />
+                
+                <button
+                   onClick={()=>redefinirSenha()} 
+                    className="flex w-full items-center gap-3 rounded-md p-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 cursor-pointer"> 
+                  <RiLockPasswordLine size={18} className="text-gray-500" /> 
+                  <span>Redefinir Senha</span> 
+                  </button>
+
                 <button 
                   disabled={saindo}
                   onClick={handleLogout}

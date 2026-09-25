@@ -91,10 +91,24 @@ export default function Home() {
 
 
 
+ async function marcarComoLida(comunicado: ComunicadoHome) {
+    if (!comunicado.id_comunicados || comunicado.id_comunicados === "banner") return;
+
+    try {
+      await fetch("/api/visualizacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_comunicado: comunicado.id_comunicados }),
+      });
+    } catch (error) {
+      console.error("Erro ao registar visualização:", error);
+    }
+  }
+
  function abrirLeitorComunicado(comunicado: ComunicadoHome) {
     setComunicadoParaLer(comunicado);
     setModalLeituraAberto(true);
-  
+    void marcarComoLida(comunicado);
   }
 
   // 2. Cálculo dinâmico da Saudação horária
@@ -218,7 +232,7 @@ async function fetchComunicados() {
 <section className="mt-8 overflow-hidden rounded-2xl bg-black shadow-lg">
   <div className="grid min-h-[420px] max-h-[420px] grid-cols-1 md:grid-cols-3">
 
-    {/* Bloco de Texto - Altura controlada com rolagem interna se necessário */}
+    {/* Bloco de Texto - Altura controlada  */}
     <div className="flex flex-col justify-center p-8 text-white sm:p-10 md:col-span-1 lg:p-12 max-h-[420px] overflow-y-auto">
       
       <span className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/60">
@@ -383,7 +397,7 @@ async function fetchComunicados() {
           </h2>
         </div>
 
-        {/* 🌟 CONTEÚDO EM MARKDOWN TOTALMENTE EXPANDIDO E FORMADO */}
+        {/*  CONTEÚDO EM MARKDOWN TOTALMENTE EXPANDIDO E FORMADO */}
         <div className="mt-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line text-left prose max-w-none border-b border-gray-100 pb-6 min-h-[100px]">
           <ReactMarkdown remarkPlugins={[remarkBreaks]}>
             {comunicadoParaLer.descricao}
