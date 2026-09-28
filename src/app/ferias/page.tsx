@@ -269,7 +269,7 @@ const hoje = [
       {/* 📊 METRICAS DE SALDO DE FÉRIAS CORRIGIDAS COM A API */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-6">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Dias Totais de Direito</p>
+          <p className="text-xs font-semibold tracking-wider text-gray-400 ">Dias Totais de Direito</p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-800">{diasTotais}</span>
             <span className="text-xs text-gray-500">Dias adquiridos</span>
@@ -277,7 +277,7 @@ const hoje = [
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Dias Disponíveis Restantes</p>
+          <p className="text-xs font-semibold tracking-wider text-gray-400">Dias Disponíveis Restantes</p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className={`text-2xl font-bold ${diasDisponiveis <= 5 ? 'text-red-600' : 'text-green-600'}`}>
               {diasDisponiveis}

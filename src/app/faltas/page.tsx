@@ -70,23 +70,6 @@ export default function FaltasColaboradorPage() {
     carregarMinhasFaltas();
   }, [autorizado]);
 
-  // 3. MATEMÁTICA AVANÇADA AUTOMÁTICA (Faltas do Mês e do Ano)
-  const dataAtual = new Date();
-  const mesAtual = dataAtual.getMonth(); // 0 = Janeiro, 8 = Setembro...
-  const anoAtual = dataAtual.getFullYear();
-
-  const faltasNoMes = faltas.filter((f) => {
-    const dataF = new Date(f.data_falta);
-    return dataF.getMonth() === mesAtual && dataF.getFullYear() === anoAtual;
-  }).length;
-
-  const totalInjustificadasAno = faltas.filter(
-    (f) => f.tipo === "injustificada" && new Date(f.data_falta).getFullYear() === anoAtual
-  ).length;
-
-  const totalJustificadasAno = faltas.filter(
-    (f) => f.tipo === "justificada" && new Date(f.data_falta).getFullYear() === anoAtual
-  ).length;
 
   if (verificandoAcesso || carregandoDados) {
     return <div className="flex h-screen items-center justify-center text-gray-500">A carregar registos de assiduidade...</div>;
@@ -95,6 +78,36 @@ export default function FaltasColaboradorPage() {
   if (!autorizado) {
     return <div className="flex h-screen items-center justify-center text-blue-700">A redirecionar...</div>;
   }
+
+  
+  const dataAtual = new Date();
+  const mesAtual = dataAtual.getMonth(); // 0 = Janeiro, 8 = Setembro...
+  const anoAtual = dataAtual.getFullYear();
+
+  const faltasNoMes = faltas.filter((f) => {
+    if (!f.data_falta) return false;
+    const partes = f.data_falta.split('-');
+    const anoFalta = parseInt(partes[0], 10);
+    const mesFalta = parseInt(partes[1], 10) - 1; 
+    return mesFalta === mesAtual && anoFalta === anoAtual;
+  }).length;
+
+  const totalInjustificadasAno = faltas.filter((f) => {
+    if (!f.data_falta) return false;
+    const partes = f.data_falta.split('-');
+    const anoFalta = parseInt(partes[0], 10);
+    return f.tipo === "injustificada" && anoFalta === anoAtual;
+  }).length;
+
+  const totalJustificadasAno = faltas.filter((f) => {
+    if (!f.data_falta) return false;
+    const partes = f.data_falta.split('-');
+    const anoFalta = parseInt(partes[0], 10);
+    return f.tipo === "justificada" && anoFalta === anoAtual;
+  }).length;
+
+
+
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
@@ -114,7 +127,7 @@ export default function FaltasColaboradorPage() {
             <FiCalendar size={24} />
           </div>
           <div>
-            <p className="text-xs font-semibold  tracking-wider text-gray-400">Faltas no Mês Atual</p>
+            <p className="text-xs font-semibold tracking-wider text-gray-400">Faltas no Mês Atual</p>
             <p className="mt-1 text-2xl font-bold text-gray-800">{faltasNoMes}</p>
           </div>
         </div>
@@ -125,7 +138,7 @@ export default function FaltasColaboradorPage() {
             <FiAlertCircle size={24} />
           </div>
           <div>
-            <p className="text-xs font-semibold  tracking-wider text-gray-400">Injustificadas (Ano)</p>
+            <p className="text-xs font-semibold tracking-wider text-gray-400">Injustificadas (Ano)</p>
             <p className="mt-1 text-2xl font-bold text-red-600">{totalInjustificadasAno}</p>
           </div>
         </div>
@@ -163,7 +176,7 @@ export default function FaltasColaboradorPage() {
                       <p className="text-sm font-semibold text-gray-800">
                         {new Date(falta.data_falta).toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" })}
                       </p>
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium  tracking-wider ${
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium tracking-wider ${
                         falta.tipo === "justificada" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                       }`}>
                         {falta.tipo}
@@ -179,7 +192,7 @@ export default function FaltasColaboradorPage() {
               {/* Layout Avançado para Desktop (Tabelas) */}
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50/70 border-b border-gray-100 text-xs font-semibold  text-gray-500">
+                  <thead className="bg-gray-50/70 border-b border-gray-100 text-xs font-semibold text-gray-500">
                     <tr>
                       <th className="px-6 py-3.5">Data da Ausência</th>
                       <th className="px-6 py-3.5">Classificação</th>
@@ -193,7 +206,7 @@ export default function FaltasColaboradorPage() {
                           {new Date(falta.data_falta).toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" })}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold  tracking-wider ${
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wider ${
                             falta.tipo === "justificada" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                           }`}>
                             {falta.tipo}

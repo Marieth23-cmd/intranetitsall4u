@@ -110,7 +110,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" :"justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" :"justify-center gap-0"}
                 ${
                   isActive("/admin")
                     ? "border-black bg-gray-100 font-medium"
@@ -135,7 +135,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/admin/colaboradores")
                     ? "border-black bg-gray-100 font-medium"
@@ -237,7 +237,7 @@ export default function Sidebar({
                   className={`
                     flex items-center gap-3 rounded-lg border-l-4 p-3
                     hover:bg-gray-100
-                    ${isOpen? "justify-center gap-3" :"justify-center gap-0"}
+                    ${isOpen? "justify-start gap-3" :"justify-center gap-0"}
                     ${
                       isActive("/admin/acessos")
                         ? "border-black bg-gray-100 font-medium"
@@ -256,7 +256,7 @@ export default function Sidebar({
                   className={`
                     flex items-center gap-3 rounded-lg border-l-4 p-3
                     hover:bg-gray-100
-                    ${isOpen? "justify-center gap-3" : "justify-center gap-0"}
+                    ${isOpen? "justify-start gap-3" : "justify-center gap-0"}
                     ${
                       isActive("/admin/definicoes")
                         ? "border-black bg-gray-100 font-medium"
@@ -282,7 +282,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 rounded-lg border-l-4 p-3
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/")
                     ? "border-black bg-gray-100 font-medium"
@@ -302,7 +302,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/comunicados")
                     ? "border-black bg-gray-100 font-medium"
@@ -322,7 +322,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/clientes")
                     ? "border-black bg-gray-100 font-medium"
@@ -348,7 +348,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/ferias")
                     ? "border-black bg-gray-100 font-medium"
@@ -366,7 +366,7 @@ export default function Sidebar({
               className={`
                 flex items-center gap-3 p-3 rounded-lg border-l-4
                 hover:bg-gray-100
-                ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                 ${
                   isActive("/faltas")
                     ? "border-black bg-gray-100 font-medium"
@@ -390,7 +390,7 @@ export default function Sidebar({
                 <Link
                   href="/admin/colaboradores"
                   className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100
-                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"} 
+                    ${isOpen ? "justify-start gap-3" : "justify-center gap-0"} 
                     ${isActive("/admin/colaboradores") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
                   <FiUsers size={20}  className="shrink-0"/>
@@ -399,7 +399,7 @@ export default function Sidebar({
                 <Link
                   href="/admin/comunicados"
                   className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100 
-                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                    ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
                     ${isActive("/admin/comunicados") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
                   <PiMegaphone size={20} className="shrink-0" />
@@ -408,7 +408,7 @@ export default function Sidebar({
                 <Link
                   href="/admin/clientes"
                   className={`flex items-center gap-3 rounded-lg border-l-4 p-3 hover:bg-gray-100
-                    ${isOpen ? "justify-center gap-3" : "justify-center gap-0"}
+                    ${isOpen ? "justify-start gap-3" : "justify-center gap-0"}
 
                      ${isActive("/admin/clientes") ? "border-black bg-gray-100 font-medium" : "border-transparent"}`}
                 >
