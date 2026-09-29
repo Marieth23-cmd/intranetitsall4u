@@ -101,23 +101,13 @@ export default function ClientesPage() {
     );
   }
 
-
-  if (clientes.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-700">Nenhum cliente encontrado.</p>
-      </div>
-    );
+    
+ if (!autorizado) {
+    return <div className="flex h-screen items-center justify-center text-gray-500">sem autorização , redirecionando ...</div>;
   }
-
-  if(!autorizado){
-        return <div className="flex h-screen items-center justify-center text-blue-700">A redirecionar para o painel administrativo...</div>;
-
-  }
-
   
  if (verificandoAcesso) {
-    return <div className="flex h-screen items-center justify-center text-gray-500">A carregar portal...</div>;
+    return <div className="flex h-screen items-center justify-center text-gray-500">A carregar clientes...</div>;
   }
 
 
@@ -129,13 +119,12 @@ export default function ClientesPage() {
 
       {/* 🟢 ABRE A VALIDAÇÃO: Se a lista de clientes do colaborador estiver vazia */}
       {clientes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm mt-6">
+        <div className="rounded-xl border  border-gray-200 bg-white p-8 text-center shadow-sm mt-8">
           <p className="text-sm font-medium text-gray-400">
             Nenhum cliente cadastrado no sistema de momento.
           </p>
         </div>
       ) : (
-        /* 🟢 CASO CONTRÁRIO (ELSE): Renderiza os blocos Mobile e Desktop de forma invisível com Fragment */
         <>
           {/* Cartões no telemóvel: evitam uma tabela comprimida ou com scroll lateral. */}
           <div className="mt-6 space-y-3 md:hidden">

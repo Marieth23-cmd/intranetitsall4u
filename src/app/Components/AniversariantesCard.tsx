@@ -120,8 +120,11 @@ export default function AniversariantesCard() {
         </div>
       ) : (
         <div className="mt-8 grid flex-1 grid-cols-3 items-center gap-3">
+          
 
           {visiveis.map((pessoa) => {
+            const primeiroNome = pessoa.nome ? pessoa.nome.split(" ")[0] : "Colaborador";
+
             const iniciais = pessoa.nome
               ? pessoa.nome
                   .split(" ")
@@ -188,7 +191,7 @@ export default function AniversariantesCard() {
                   "
                   title={pessoa.nome}
                 >
-                  {pessoa.nome}
+                  {primeiroNome}
                 </p>
 
                 {/* Data */}
