@@ -93,17 +93,38 @@ export default function GestaoFaltasAdminPage() {
     }
   }
 
-  
 
-  
+    
+  // 🟢 CORREÇÃO DOS ÍNDICES DAS DATAS (Bypass de Fuso Horário)
+  const dataAtual = new Date();
+  const mesAtualHumano = dataAtual.getMonth() + 1; // Ex: Setembro é 9
+  const anoAtual = dataAtual.getFullYear();
 
-    return (
+  // 1. Contador do Mês Atual
+  const faltasNoMes = faltas.filter((f) => {
+    if (!f.data_falta) return false;
+    const partes = f.data_falta.split('-');
+    const anoFalta = parseInt(partes[0], 10);
+    const mesFaltaTexto = parseInt(partes[1], 10); 
+    return mesFaltaTexto === mesAtualHumano && anoFalta === anoAtual;
+  }).length;
+
+  // 2. Trava para o input de data não permitir selecionar o futuro
+  const hojeStr = dataAtual.toISOString().split("T")[0];
+
+  return (
     <main className="mx-auto max-w-6xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       {/* Cabeçalho */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
         <div>
           <h1 className="page-title text-xl font-bold text-gray-900">Controlo de Assiduidade</h1>
-          <p className="content-description mt-1 text-sm text-gray-500">Registe ausências e controle o histórico de faltas da empresa.</p>
+          <p className="content-description mt-1 text-sm text-gray-500">
+            Registe ausências e controle o histórico de faltas da empresa.
+             <span className="font-semibold text-gray-700 ml-1">
+              Este mês já foram registadas {faltasNoMes} faltas no total.</span>
+
+            </p>
+       
         </div>
         <button
           onClick={() => setModalAberto(true)}
@@ -120,10 +141,9 @@ export default function GestaoFaltasAdminPage() {
           <p className="p-8 text-center text-sm text-gray-400">Nenhum funcionário possui faltas.</p>
         ) : (
           <>
-            {/* 📱 LAYOUT PARA TELEMÓVEL: Aparece apenas em ecrãs pequenos */}
+            {/* 📱 LAYOUT PARA TELEMÓVEL */}
             <div className="block p-4 space-y-3 md:hidden">
               {faltas.map((falta) => {
-                // Calcula quantas vezes este colaborador específico aparece no histórico
                 const totalFaltasColaborador = faltas.filter(
                   (f) => f.colaboradores?.nome === falta.colaboradores?.nome
                 ).length;
@@ -160,7 +180,7 @@ export default function GestaoFaltasAdminPage() {
               })}
             </div>
 
-            {/* 💻 LAYOUT PARA COMPUTADOR: Escondido no mobile, vira tabela no desktop */}
+            {/* 💻 LAYOUT PARA COMPUTADOR */}
             <table className="hidden w-full text-left text-sm md:table">
               <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
                 <tr>
@@ -173,7 +193,6 @@ export default function GestaoFaltasAdminPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {faltas.map((falta) => {
-                  // Calcula quantas vezes este colaborador específico aparece no histórico
                   const totalFaltasColaborador = faltas.filter(
                     (f) => f.colaboradores?.nome === falta.colaboradores?.nome
                   ).length;
@@ -222,10 +241,19 @@ export default function GestaoFaltasAdminPage() {
                   {colaboradores.map(c => <option key={c.id_colaborador} value={c.id_colaborador}>{c.nome}</option>)}
                 </select>
               </div>
+              
               <div>
                 <label className="block text-xs font-medium text-gray-600">Data da Ausência</label>
-                
+                <input 
+                  type="date" 
+                  required 
+                  max={hojeStr} // 🔒 BLOQUEIO DA DATA FUTURA: Usa a string limpa do topo
+                  value={form.data_falta} 
+                  onChange={(e) => setForm({ ...form, data_falta: e.target.value })} 
+                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-red-600" 
+                />
               </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-600">Classificação</label>
                 <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-red-600 bg-white">
@@ -233,6 +261,7 @@ export default function GestaoFaltasAdminPage() {
                   <option value="justificada">Justificada</option>
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-600">Justificativa / Comentário</label>
                 <input type="text" value={form.justificativa} onChange={(e) => setForm({ ...form, justificativa: e.target.value })} placeholder="Ex: Apresentou atestado médico" className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-red-600" />
