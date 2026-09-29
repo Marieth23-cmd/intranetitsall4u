@@ -292,7 +292,19 @@ async function eliminarComunicado(idComunicado: string) {
         </button>
 
       </div>
+
+
+
+
 {/* Lista de comunicados */}
+
+{comunicados.length === 0 ?(
+  <div className="rounded-xl border mt-8  border-gray-200 bg-white p-8 text-center overflow-hidden">
+        <p className="text-sm font-medium text-gray-400">
+          Nenhum comunicado publicado de momento.
+        </p>
+      </div>
+):(
 <div className="mt-6 space-y-4">
 
   {comunicados.map((comunicado, index) => { 
@@ -310,6 +322,8 @@ async function eliminarComunicado(idComunicado: string) {
     : comunicado.descricao;
 
     return (
+
+    
       <article
         key={comunicado.id_comunicados || index} 
         className="
@@ -317,8 +331,9 @@ async function eliminarComunicado(idComunicado: string) {
           bg-white p-5 shadow-sm
         "
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          
           <div className="max-w-3xl">
              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <h2 className="section-title mb-2">
@@ -380,12 +395,14 @@ async function eliminarComunicado(idComunicado: string) {
           </div>
 
         </div>
+        
       </article>
     ); 
+  
   })}
 
 </div>
-
+)}
 
 
   {modalAberto && (

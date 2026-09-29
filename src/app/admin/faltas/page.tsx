@@ -113,7 +113,7 @@ export default function GestaoFaltasAdminPage() {
   const hojeStr = dataAtual.toISOString().split("T")[0];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
       {/* Cabeçalho */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4">
         <div>

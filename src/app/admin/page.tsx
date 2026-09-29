@@ -336,6 +336,13 @@ async function fetchComunicados() {
 
 
         {/* Comunicados */}
+        {comunicados.length === 0 ? (
+          <div className="rounded-xl border  border-gray-50 bg-white p-12 text-center shadow-sm">
+            <p className="text-sm font-medium text-gray-400">
+              Sem comunicados recentes .
+            </p>
+          </div>
+        ) : (
         <article className="rounded-xl bg-white p-5 shadow-sm sm:p-6">
 
           <div className="flex items-center justify-between">
@@ -407,6 +414,8 @@ async function fetchComunicados() {
           </div>
 
         </article>
+        )}
+
 
         <AniversariantesCard />
 

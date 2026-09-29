@@ -275,6 +275,13 @@ export default function FeriasAdminPage() {
       </div>
 
       {/* Lista Geral dos Pedidos */}
+      {pedidos.length === 0 ? (
+          <div className="rounded-xl border  border-gray-200 bg-white p-8  text-center shadow-sm">
+            <p className="text-sm font-medium text-gray-400">
+              Nenhuma férias registada no sistema.
+            </p>
+          </div>
+        ) : (
       <section className="mt-6 rounded-xl border border-gray-200 bg-white shadow-sm p-4 grid gap-4">
         {pedidos.map((pedido) => {
 
@@ -327,6 +334,7 @@ export default function FeriasAdminPage() {
           );
         })}
       </section>
+        )}
     </main>
   );
 }

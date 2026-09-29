@@ -343,7 +343,17 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
       </header>
 
       
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+
+          {colaboradores.length === 0 ? (
+  <div className="rounded-xl border mt-8 border-gray-200 bg-white p-8 text-center shadow-sm">
+    <p className="text-sm font-medium text-gray-400">
+      Nenhum colaborador registado no sistema de momento.
+    </p>
+  </div>
+) : (
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 space-y-4">
 
         
         {colaboradores.map((colaborador) => {
@@ -360,7 +370,9 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
     const aniversarioReal = colaborador.data_nascimento || "Não informado";
 
     return (
-      <article
+    
+    
+    <article
   key={colaborador.id_colaborador}
   className="
     rounded-xl border border-gray-200
@@ -370,8 +382,15 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
     hover:border-gray-300
   "
 >
+
+
+
+  
   {/* Cabeçalho do colaborador */}
+ 
   <div className="flex items-center justify-between gap-3">
+
+
 
     <div className="flex min-w-0 items-center gap-3">
 
@@ -484,11 +503,19 @@ async function confirmarEliminacaoColaborador(id_colaborador: string) {
     </p>
 
   </div>
+      
 
 </article>
     )
   })} 
 </div>
+
+)}
+
+
+
+
+
 
 {/* MODAL DE CADASTRO (Aparece apenas se modalAberto for true) */}
 {modalAberto && (

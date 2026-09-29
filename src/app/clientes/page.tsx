@@ -123,57 +123,69 @@ export default function ClientesPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 text-gray-700 sm:px-6 lg:px-8">
-      <header>
-        <h1 className="page-title">Clientes</h1>
-      
+            <header>
+        <h1 className="page-title text-xl font-bold text-gray-900">Clientes</h1>
       </header>
 
-
-      {/* Cartões no telemóvel: evitam uma tabela comprimida ou com scroll lateral. */}
-      <div className="mt-6 space-y-3 md:hidden">
-        {clientes.map((cliente) => (
-          <article key={cliente.nome} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="section-title">{cliente.nome}</h2>
-              <EstadoCliente estado={cliente.estado} />
-            </div>
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <dt className="text-xs text-gray-400">Área</dt>
-                <dd className="mt-1 font-medium text-gray-700">{cliente.area}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-gray-400">Projetos</dt>
-                <dd className="mt-1 font-medium text-gray-700">{cliente.projetos}</dd>
-              </div>
-            </dl>
-          </article>
-        ))}
-      </div>
-
-      {/* Tabela a partir de md (768px), quando há largura suficiente para as quatro colunas. */}
-      <div className="mt-6 hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
-        <table className="w-full min-w-[640px] text-left">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">Nome do cliente</th>
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">Área</th>
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">Projetos</th>
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
+      {/* 🟢 ABRE A VALIDAÇÃO: Se a lista de clientes do colaborador estiver vazia */}
+      {clientes.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm mt-6">
+          <p className="text-sm font-medium text-gray-400">
+            Nenhum cliente cadastrado no sistema de momento.
+          </p>
+        </div>
+      ) : (
+        /* 🟢 CASO CONTRÁRIO (ELSE): Renderiza os blocos Mobile e Desktop de forma invisível com Fragment */
+        <>
+          {/* Cartões no telemóvel: evitam uma tabela comprimida ou com scroll lateral. */}
+          <div className="mt-6 space-y-3 md:hidden">
             {clientes.map((cliente) => (
-              <tr key={cliente.nome} className="border-t border-gray-100">
-                <td className="px-5 py-4 text-sm font-medium text-gray-800">{cliente.nome}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{cliente.area}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{cliente.projetos}</td>
-                <td className="px-5 py-4"><EstadoCliente estado={cliente.estado} /></td>
-              </tr>
+              <article key={cliente.nome} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="section-title font-semibold text-gray-900">{cliente.nome}</h2>
+                  <EstadoCliente estado={cliente.estado} />
+                </div>
+                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-xs text-gray-400">Área</dt>
+                    <dd className="mt-1 font-medium text-gray-700">{cliente.area}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-gray-400">Projetos</dt>
+                    <dd className="mt-1 font-medium text-gray-700">{cliente.projetos}</dd>
+                  </div>
+                </dl>
+              </article>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Tabela a partir de md (768px), quando há largura suficiente para as quatro colunas. */}
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
+            <table className="w-full min-w-[640px] text-left">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Nome do cliente</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Área</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Projetos</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {clientes.map((cliente) => (
+                  <tr key={cliente.nome} className="hover:bg-gray-50/40 transition border-t border-gray-100">
+                    <td className="px-5 py-4 text-sm font-medium text-gray-800">{cliente.nome}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{cliente.area}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{cliente.projetos}</td>
+                    <td className="px-5 py-4">
+                      <EstadoCliente estado={cliente.estado} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

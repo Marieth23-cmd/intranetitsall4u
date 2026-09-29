@@ -271,7 +271,10 @@ if(loading){
 
       </header>
 
-      <div className="relative mt-6 max-w-md">
+
+
+         
+           <div className="relative mt-6 max-w-md">
         <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
         <input
           type="search"
@@ -281,213 +284,128 @@ if(loading){
           className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
         />
       </div>
-
-      {/* Mobile */}
-      <div className="mt-6 space-y-3 md:hidden">
-
-        {clientesFiltrados.map((cliente) => (
-
-          <article
-            key={cliente.nome}
-            className="
-              rounded-xl border border-gray-200
-              bg-white p-4 shadow-sm
-            "
-          >
-
-            {/* Nome + estado */}
-            <div className="flex items-start justify-between gap-3">
-
-              <h2 className="section-title">
-                {cliente.nome}
-              </h2>
-
-              <EstadoCliente estado={cliente.estado} />
-
-            </div>
-
-            {/* Informações */}
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-
-              <div>
-                <dt className="text-xs text-gray-400">
-                  Área
-                </dt>
-
-                <dd className="mt-1 font-medium text-gray-700">
-                  {cliente.area}
-                </dd>
-              </div>
-
-              <div>
-                <dt className="text-xs text-gray-400">
-                  Projetos
-                </dt>
-
-                <dd className="mt-1 font-medium text-gray-700">
-                  {cliente.projetos}
-                </dd>
-              </div>
-
-            </dl>
-
-            {/* Ação */}
-            <div className=" flex gap-4 mt-4 border-t border-gray-100 pt-4">
-
-
-
-              {(role === "admin" || role === "gestor") && <button
-                type="button"
-                onClick={() => abrirEdicao(cliente)}
-                className="
-                  inline-flex w-full items-center
-                  justify-center gap-2
-                  rounded-md border border-gray-200
-                  px-3 py-2 text-sm text-gray-600
-                  transition hover:bg-gray-50
-                  hover:text-gray-800
-                "
-              >
-                <FiEdit2 size={16} />
-                Editar cliente
-              </button>}
-
-              {(role === "admin" || role === "gestor") && <button
-                type="button"
-                onClick={() => confirmarEliminacao(cliente.id_cliente)}
-                className="
-                  inline-flex w-full items-center
-                  justify-center gap-2
-                  rounded-md border border-gray-200
-                  px-3 py-2 text-sm text-gray-600
-                  transition hover:bg-gray-50
-                  hover:text-gray-800
-                "
-              >
-                <FiEdit2 size={16} />
-                Elimina Cliente
-              </button>}
-
-
-            </div>
-
-          </article>
-
-        ))}
-
-      </div>
-
-      {/* Desktop */}
-      <div
-        className="
-          mt-6 hidden overflow-x-auto
-          rounded-xl border border-gray-200
-          bg-white shadow-sm md:block
-        "
-      >
-
-        <table className="w-full text-left">
-
-          <thead className="bg-gray-50">
-
-            <tr>
-
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">
-                Nome do cliente
-              </th>
-
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">
-                Área
-              </th>
-
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">
-                Projetos
-              </th>
-
-              <th className="px-5 py-3 text-sm font-medium text-gray-700">
-                Estado
-              </th>
-
-              <th className="px-5 py-3 text-right text-sm font-medium text-gray-700">
-                Ação
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
+      
+      {/* 🟢 ABRE A VALIDAÇÃO: Se não existirem clientes filtrados */}
+      {clientesFiltrados.length === 0 ? (
+        <div className="rounded-xl border  border-gray-200 bg-white p-8 mt-8 text-center shadow-sm ">
+          <p className="text-sm font-medium text-gray-400">
+            Nenhum cliente cadastrado no sistema.
+          </p>
+        </div>
+      ) : (
+        /* 🟢 CASO CONTRÁRIO (ELSE): Renderiza os blocos Mobile e Desktop */
+        <>
+          {/* ==================== LAYOUT MOBILE ==================== */}
+          <div className="mt-6 space-y-3 md:hidden">
             {clientesFiltrados.map((cliente) => (
-
-              <tr
+              <article
                 key={cliente.nome}
-                className="border-t border-gray-100"
+                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
               >
-
-                <td className="px-5 py-4 text-sm font-medium text-gray-800">
-                  {cliente.nome}
-                </td>
-
-                <td className="px-5 py-4 text-sm text-gray-600">
-                  {cliente.area}
-                </td>
-
-                <td className="px-5 py-4 text-sm text-gray-600">
-                  {cliente.projetos}
-                </td>
-
-                <td className="px-5 py-4">
+                {/* Nome + estado */}
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="section-title font-semibold text-gray-900">
+                    {cliente.nome}
+                  </h2>
                   <EstadoCliente estado={cliente.estado} />
-                </td>
+                </div>
 
-                <td className="px-5 py-4">
+                {/* Informações */}
+                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-xs text-gray-400">Área</dt>
+                    <dd className="mt-1 font-medium text-gray-700">{cliente.area}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-gray-400">Projetos</dt>
+                    <dd className="mt-1 font-medium text-gray-700">{cliente.projetos}</dd>
+                  </div>
+                </dl>
 
-                  <div className="flex gap-1 justify-end">
-
-                     {(role === "admin" || role === "gestor") && <button
+                {/* Ações Mobile */}
+                <div className="flex gap-4 mt-4 border-t border-gray-100 pt-4">
+                  {(role === "admin" || role === "gestor") && (
+                    <button
                       type="button"
                       onClick={() => abrirEdicao(cliente)}
-                      title="Editar cliente"
-                      className="
-                        rounded-md border border-gray-200
-                        p-2 text-gray-500
-                        transition hover:bg-gray-50
-                        hover:text-gray-800
-                      "
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50 hover:text-gray-800 cursor-pointer"
                     >
-                      <FiEdit2 size={17} />
-                    </button>}
+                      <FiEdit2 size={16} />
+                      Editar cliente
+                    </button>
+                  )}
 
-                    {(role === "admin" || role === "gestor") && <button
+                  {(role === "admin" || role === "gestor") && (
+                    <button
                       type="button"
                       onClick={() => confirmarEliminacao(cliente.id_cliente)}
-                      title="Eliminar cliente"
-                      className="
-                         rounded-lg border border-red-100 p-2 text-red-500 hover:bg-red-50
-                       
-                        transition 
-                        hover:text-red-800
-                      "
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-100 bg-red-50/30 px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 cursor-pointer"
                     >
-                      <FiTrash2 size={17} />
-                    </button>}
-
-                    
-
-                  </div>
-
-                </td>
-
-              </tr>
-
+                      <FiTrash2 size={16} />
+                      Eliminar Cliente
+                    </button>
+                  )}
+                </div>
+              </article>
             ))}
+          </div>
 
-          </tbody>
+          {/* ==================== LAYOUT DESKTOP ==================== */}
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Nome do cliente</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Área</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Projetos</th>
+                  <th className="px-5 py-3 text-sm font-medium text-gray-700">Estado</th>
+                  <th className="px-5 py-3 text-right text-sm font-medium text-gray-700">Ação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {clientesFiltrados.map((cliente) => (
+                  <tr key={cliente.nome} className="hover:bg-gray-50/40 transition">
+                    <td className="px-5 py-4 text-sm font-medium text-gray-800">{cliente.nome}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{cliente.area}</td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{cliente.projetos}</td>
+                    <td className="px-5 py-4">
+                      <EstadoCliente estado={cliente.estado} />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex gap-1 justify-end">
+                        {(role === "admin" || role === "gestor") && (
+                          <button
+                            type="button"
+                            onClick={() => abrirEdicao(cliente)}
+                            title="Editar cliente"
+                            className="rounded-md border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-50 hover:text-gray-800 cursor-pointer"
+                          >
+                            <FiEdit2 size={17} />
+                          </button>
+                        )}
 
-        </table>
+                        {(role === "admin" || role === "gestor") && (
+                          <button
+                            type="button"
+                            onClick={() => confirmarEliminacao(cliente.id_cliente)}
+                            title="Eliminar cliente"
+                            className="rounded-lg border border-red-100 p-2 text-red-500 transition hover:bg-red-50 hover:text-red-800 cursor-pointer"
+                          >
+                            <FiTrash2 size={17} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+   
 
-      </div>
+
 
       {modalAberto && (
         <div

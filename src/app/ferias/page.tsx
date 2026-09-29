@@ -358,7 +358,7 @@ const hoje = [
           </div>
 
           {historicoReal.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Nenhum registo no histórico encontrado.</p>
+            <p className="text-sm text-gray-400 text-center py-8">Nenhum pedido feito no sistema ainda.</p>
           ) : (
             <>
               {/* Layout Mobile */}
